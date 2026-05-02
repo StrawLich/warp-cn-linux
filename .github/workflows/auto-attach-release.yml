@@ -38,13 +38,10 @@ jobs:
           BUILD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           set -eu
-          # 拉最近 30 个 release 找符合的 draft。
-          tag=$(gh release list \
-                  --repo "${{ github.repository }}" \
-                  --json tagName,isDraft,targetCommitish \
-                  --limit 30 \
+          # 用 REST API 直接查 release 列表（gh release list --json 不支持 targetCommitish 字段）。
+          tag=$(gh api "/repos/${{ github.repository }}/releases?per_page=30" \
                 | jq -r --arg sha "$BUILD_SHA" \
-                    '.[] | select(.isDraft == true and .targetCommitish == $sha) | .tagName' \
+                    '.[] | select(.draft == true and .target_commitish == $sha) | .tag_name' \
                 | head -1)
           if [ -z "$tag" ]; then
             echo "::notice::No draft release targets $BUILD_SHA — skipping attach"

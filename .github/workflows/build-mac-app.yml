@@ -37,11 +37,10 @@ permissions:
 jobs:
   build:
     name: Build ${{ inputs.channel }} (${{ inputs.arch }})
-    # macos-14 = M1 (arm64) free runner. macos-13 = Intel.
-    # 交叉编译 x86_64 时用 arm 主机一样可以；保持 macos-14。
-    runs-on: macos-14
-    # release-lto on free macos-14 (4-core M1) needs 200+ min cold; debug profile ~25-35 min.
-    # 240 min covers a cold release build with margin; warm cache cuts both substantially.
+    # 优先用维护者的自托管 macOS runner（M1/M2 mac mini，比免费 macos-14 快 3-5 倍）。
+    # 离线时 GitHub 自动排队等 runner，不会回退到 macos-14；如长期离线请改回 macos-14。
+    runs-on: [self-hosted, macOS, ARM64]
+    # release-lto 在 self-hosted M1/M2 mini 通常 30-60 min；debug ~10-15 min。240 min 留足余量。
     timeout-minutes: 240
 
     env:
