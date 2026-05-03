@@ -153,9 +153,15 @@ const LINEAR_SCROLLING: ScrollingAcceleration = ScrollingAcceleration::Polynomia
 /// have a height that extends down to the bottom of the window when there's a horizontal scroll bar, which messes with the on-hover behavior.
 const BLOCK_HOVER_BUTTON_HEIGHT: f32 = 28.;
 
-fn tag_agent_text() -> String { warp_i18n::t!("terminal-tag-agent") }
-fn save_as_workflow_text() -> String { warp_i18n::t!("terminal-save-as-workflow") }
-fn save_as_workflow_secrets_text() -> String { warp_i18n::t!("terminal-workflow-secrets-warning") }
+fn tag_agent_text() -> String {
+    warp_i18n::t!("terminal-tag-agent")
+}
+fn save_as_workflow_text() -> String {
+    warp_i18n::t!("terminal-save-as-workflow")
+}
+fn save_as_workflow_secrets_text() -> String {
+    warp_i18n::t!("terminal-workflow-secrets-warning")
+}
 
 enum ScrollingAcceleration {
     Polynomial(f32),
@@ -1161,10 +1167,7 @@ impl BlockListElement {
                 let has_active_long_running_command = active_block.is_active_and_long_running();
 
                 if has_active_long_running_command && active_block.index() == block_index {
-                    (
-                        Some(TerminalAction::SetInputModeAgent),
-                        tag_agent_text(),
-                    )
+                    (Some(TerminalAction::SetInputModeAgent), tag_agent_text())
                 } else {
                     (
                         Some(TerminalAction::AskAIAssistant { block_index }),

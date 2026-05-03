@@ -2,9 +2,9 @@
 
 use markdown_parser::{FormattedText, FormattedTextFragment, FormattedTextLine};
 use warp_core::ui::appearance::Appearance;
-use warp_i18n::t;
 use warp_core::ui::theme::AnsiColorIdentifier;
 use warp_core::ui::Icon;
+use warp_i18n::t;
 use warpui::elements::shimmering_text::ShimmeringTextStateHandle;
 use warpui::elements::{
     Align, Border, ConstrainedBox, Container, CrossAxisAlignment, Element, Expanded, Flex,

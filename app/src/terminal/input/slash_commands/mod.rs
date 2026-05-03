@@ -599,10 +599,7 @@ impl Input {
                             }
                             Err(_) => {
                                 let path = file_path.display().to_string();
-                                show_error_toast(
-                                    t!("error-open-file-not-found", path = path),
-                                    ctx,
-                                );
+                                show_error_toast(t!("error-open-file-not-found", path = path), ctx);
                                 return true;
                             }
                         }

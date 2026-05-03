@@ -19,7 +19,9 @@ use crate::terminal::view::{
     LONG_RUNNING_AGENT_REQUESTED_COMMAND_USER_TOOK_OVER_CONTEXT_KEY,
 };
 use crate::util::bindings;
-use crate::util::bindings::{cmd_or_ctrl_shift, is_binding_pty_compliant, BindingDescriptionFluentExt};
+use crate::util::bindings::{
+    cmd_or_ctrl_shift, is_binding_pty_compliant, BindingDescriptionFluentExt,
+};
 use crate::{
     channel::{Channel, ChannelState},
     features::FeatureFlag,
@@ -406,15 +408,15 @@ pub fn init(app: &mut AppContext) {
             BindingDescription::fluent("binding-terminal-view-paste"),
             TerminalAction::Paste,
         )
-            .with_custom_action(CustomAction::Paste)
-            .with_context_predicate(id!("Terminal") & !id!("IMEOpen")),
+        .with_custom_action(CustomAction::Paste)
+        .with_context_predicate(id!("Terminal") & !id!("IMEOpen")),
         EditableBinding::new(
             "terminal:copy",
             BindingDescription::fluent("binding-terminal-view-copy"),
             TerminalAction::Copy,
         )
-            .with_custom_action(CustomAction::Copy)
-            .with_context_predicate(id!("Terminal") & !id!("IMEOpen")),
+        .with_custom_action(CustomAction::Copy)
+        .with_context_predicate(id!("Terminal") & !id!("IMEOpen")),
         EditableBinding::new(
             "terminal:reinput_commands",
             BindingDescription::fluent("binding-terminal-view-reinput-commands"),
@@ -872,7 +874,9 @@ pub fn init(app: &mut AppContext) {
         ),
         EditableBinding::new(
             "terminal:agent_onboarding_flow_universal_input_no_project",
-            BindingDescription::fluent("binding-terminal-view-debug-onboarding-warpinput-no-project"),
+            BindingDescription::fluent(
+                "binding-terminal-view-debug-onboarding-warpinput-no-project",
+            ),
             TerminalAction::OnboardingFlow(OnboardingVersion::Agent(
                 AgentOnboardingVersion::UniversalInput { has_project: false },
             )),
@@ -902,7 +906,9 @@ pub fn init(app: &mut AppContext) {
         ),
         EditableBinding::new(
             "terminal:agent_onboarding_flow_modality_no_project",
-            BindingDescription::fluent("binding-terminal-view-debug-onboarding-modality-no-project"),
+            BindingDescription::fluent(
+                "binding-terminal-view-debug-onboarding-modality-no-project",
+            ),
             TerminalAction::OnboardingFlow(OnboardingVersion::Agent(
                 AgentOnboardingVersion::AgentModality {
                     has_project: false,

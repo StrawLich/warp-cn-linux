@@ -1,7 +1,7 @@
 use pathfinder_color::ColorU;
 use warp_core::ui::appearance::Appearance;
-use warp_i18n::t;
 use warp_core::ui::theme::Fill;
+use warp_i18n::t;
 use warpui::elements::{
     ChildView, ClippedScrollStateHandle, ClippedScrollable, Dismiss, ParentElement, ScrollbarWidth,
 };
@@ -287,10 +287,14 @@ impl NodeVersionPopupView {
 
         col.add_child(
             Container::new(
-                Text::new(t!("misc-node-installed-badge"), styles.ui_font_family, styles.detail_font_size)
-                    .with_style(Properties::default())
-                    .with_color(styles.secondary_text_color)
-                    .finish(),
+                Text::new(
+                    t!("misc-node-installed-badge"),
+                    styles.ui_font_family,
+                    styles.detail_font_size,
+                )
+                .with_style(Properties::default())
+                .with_color(styles.secondary_text_color)
+                .finish(),
             )
             .with_horizontal_padding(12.)
             .finish(),

@@ -122,7 +122,10 @@ impl View for SshRemoteServerFailedBanner {
             let error_text_color = theme.ansi_fg_red();
 
             let error_text = Text::new(
-                t!("terminal-ssh-failed-banner-error-line", detail = trimmed_error),
+                t!(
+                    "terminal-ssh-failed-banner-error-line",
+                    detail = trimmed_error
+                ),
                 appearance.ui_font_family(),
                 small_font_size,
             )

@@ -1,7 +1,7 @@
 use ordered_float::OrderedFloat;
 use warp_core::ui::appearance::Appearance;
-use warp_i18n::t;
 use warp_core::ui::theme::Fill;
+use warp_i18n::t;
 use warpui::elements::{Expanded, Highlight, Icon, ParentElement, Shrinkable};
 use warpui::fonts::{Properties, Weight};
 use warpui::prelude::{ConstrainedBox, Container, CrossAxisAlignment, Empty, Flex, Text};

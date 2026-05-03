@@ -47,10 +47,18 @@ const MAXIMUM_CONTEXT_LINES: u16 = 99;
 const MAXIMUM_CONTEXT_LINE_EDITOR_BUFFER_LENGTH: usize = 2;
 pub type ContextLines = u16;
 pub const DEFAULT_CONTEXT_LINES_VALUE: ContextLines = 0;
-fn context_line_tooltip_label() -> String { warp_i18n::t!("terminal-context-lines-tooltip") }
-fn regex_tooltip_label() -> String { warp_i18n::t!("terminal-regex-tooltip") }
-fn case_sensitivity_tooltip_label() -> String { warp_i18n::t!("terminal-case-sensitive-tooltip") }
-fn invert_filter_tooltip_label() -> String { warp_i18n::t!("terminal-invert-filter-tooltip") }
+fn context_line_tooltip_label() -> String {
+    warp_i18n::t!("terminal-context-lines-tooltip")
+}
+fn regex_tooltip_label() -> String {
+    warp_i18n::t!("terminal-regex-tooltip")
+}
+fn case_sensitivity_tooltip_label() -> String {
+    warp_i18n::t!("terminal-case-sensitive-tooltip")
+}
+fn invert_filter_tooltip_label() -> String {
+    warp_i18n::t!("terminal-invert-filter-tooltip")
+}
 
 pub const BLOCK_FILTER_DOTTED_LINE_DASH: Dash = Dash {
     dash_length: 4.,

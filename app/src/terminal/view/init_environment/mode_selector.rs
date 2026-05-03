@@ -4,6 +4,7 @@ use pathfinder_color::ColorU;
 use pathfinder_geometry::vector::vec2f;
 use warp_core::ui::color::blend::Blend;
 use warp_core::ui::theme::color::internal_colors;
+use warp_i18n::t;
 use warpui::elements::{
     Align, Border, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment, Dismiss,
     DropShadow, Element, Flex, Hoverable, MainAxisAlignment, MainAxisSize, MouseStateHandle,
@@ -13,7 +14,6 @@ use warpui::fonts::{Properties, Weight};
 use warpui::keymap::{FixedBinding, Keystroke};
 use warpui::platform::Cursor;
 use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
-use warp_i18n::t;
 use warpui::{AppContext, Entity, SingletonEntity, TypedActionView, View, ViewContext};
 
 // Figma node 6583:23542
@@ -262,11 +262,14 @@ impl EnvironmentSetupModeSelector {
                 .with_child(title_text);
 
             if is_suggested {
-                let suggested_text =
-                    Text::new(t!("terminal-init-env-suggested"), font_family, OPTION_DESC_FONT_SIZE)
-                        .with_style(Properties::default().weight(Weight::Medium))
-                        .with_color(badge_text_color)
-                        .finish();
+                let suggested_text = Text::new(
+                    t!("terminal-init-env-suggested"),
+                    font_family,
+                    OPTION_DESC_FONT_SIZE,
+                )
+                .with_style(Properties::default().weight(Weight::Medium))
+                .with_color(badge_text_color)
+                .finish();
 
                 let suggested = Container::new(suggested_text)
                     .with_horizontal_padding(8.)

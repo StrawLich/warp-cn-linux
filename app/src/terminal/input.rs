@@ -262,12 +262,12 @@ use warp_completer::{
     signatures::CommandRegistry,
 };
 use warp_core::user_preferences::GetUserPreferences as _;
-use warp_i18n::t;
 use warp_core::{
     context_flag::ContextFlag,
     ui::theme::{color::internal_colors, AnsiColorIdentifier},
 };
 use warp_editor::editor::NavigationKey;
+use warp_i18n::t;
 use warp_util::path::ShellFamily;
 use warpui::{
     accessibility::{AccessibilityContent, ActionAccessibilityContent, WarpA11yRole},
@@ -786,10 +786,12 @@ impl InputSuggestionsMode {
             InputSuggestionsMode::UserQueryMenu {
                 action: UserQueryMenuAction::Rewind,
                 ..
-            } => Some(warp_i18n::t!("terminal-input-placeholder-search-queries-rewind")),
-            InputSuggestionsMode::ConversationMenu => {
-                Some(warp_i18n::t!("terminal-input-placeholder-search-conversations"))
-            }
+            } => Some(warp_i18n::t!(
+                "terminal-input-placeholder-search-queries-rewind"
+            )),
+            InputSuggestionsMode::ConversationMenu => Some(warp_i18n::t!(
+                "terminal-input-placeholder-search-conversations"
+            )),
             InputSuggestionsMode::SkillMenu => {
                 Some(warp_i18n::t!("terminal-input-placeholder-search-skills"))
             }
@@ -805,9 +807,9 @@ impl InputSuggestionsMode {
             InputSuggestionsMode::PromptsMenu => {
                 Some(warp_i18n::t!("terminal-input-placeholder-search-prompts"))
             }
-            InputSuggestionsMode::IndexedReposMenu => {
-                Some(warp_i18n::t!("terminal-input-placeholder-search-indexed-repos"))
-            }
+            InputSuggestionsMode::IndexedReposMenu => Some(warp_i18n::t!(
+                "terminal-input-placeholder-search-indexed-repos"
+            )),
             InputSuggestionsMode::PlanMenu { .. } => {
                 Some(warp_i18n::t!("terminal-input-placeholder-search-plans"))
             }
@@ -7243,8 +7245,7 @@ impl Input {
                 self.try_execute_command(&command, ctx);
 
                 ctx.emit_a11y_content(AccessibilityContent::new_without_help(
-                    warp_i18n::t!("a11y-input-executed-command", command = command)
-                        .to_string(),
+                    warp_i18n::t!("a11y-input-executed-command", command = command).to_string(),
                     WarpA11yRole::UserAction,
                 ));
             }
