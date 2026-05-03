@@ -4,6 +4,9 @@
 # diff_selector.rs (1)
 code-review-diff-selector-uncommitted-changes = Uncommitted changes
 
+# diff_menu.rs (1)
+code-review-diff-menu-search-placeholder = Search diff sets or branches to compare…
+
 # comment_rendering.rs (1)
 code-review-comment-fallback-title = Review Comment
 
@@ -80,19 +83,27 @@ code-review-view-show-file-navigation = Show file navigation
 code-review-view-tooltip-view-changes = View changes
 code-review-view-disabled-remote = Diffs only work for local workspaces.
 code-review-view-disabled-non-git = Diffs only work for git repositories.
+code-review-view-disabled-wsl = Diffs don't currently work in WSL.
 code-review-view-discard-tooltip-git-busy = Cannot discard changes while a git operation (merge, rebase, etc.) is in progress
 code-review-view-discard-tooltip-no-changes = No changes to discard
 code-review-view-discard-title-uncommitted = Discard uncommitted changes?
 code-review-view-discard-title-file-uncommitted = Discard all uncommitted changes to file?
 code-review-view-discard-title-all-against-branch = Discard all changes?
 code-review-view-discard-title-file-against-branch = Discard all changes to file?
+code-review-view-discard-body-all-uncommitted = You're about to discard all local changes that haven't been committed.
 code-review-view-discard-body-file-uncommitted = This will restore this file to the last committed version and discard local edits.
+code-review-view-discard-body-all-against-branch = You're about to discard all committed and uncommitted changes.
 code-review-view-discard-body-file-against-branch = This will restore this file to the main branch version and discard all committed and uncommitted edits.
+code-review-view-discard-body-file-against-named-branch = This will reset this file to the { $branch } branch version and discard all committed and uncommitted edits.
 code-review-view-tooltip-maximize = Maximize
 code-review-view-tooltip-restore = Restore
 code-review-view-button-commit = Commit
+code-review-view-button-push = Push
+code-review-view-button-undo = Undo
+code-review-view-button-retry = Retry
 code-review-view-button-discard-changes = Discard changes
 code-review-view-button-cancel = Cancel
+code-review-view-title = Code review
 code-review-view-button-initialize-codebase = Initialize codebase
 code-review-view-tooltip-initialize-codebase = Enables codebase indexing and WARP.md
 code-review-view-button-open-repository = Open repository
@@ -114,6 +125,7 @@ code-review-view-button-publish = Publish
 code-review-view-tooltip-no-changes-to-commit = No changes to commit
 code-review-view-tooltip-no-git-actions = No git actions available
 code-review-view-menu-commit = Commit
+code-review-view-menu-push = Push
 code-review-view-menu-publish = Publish
 code-review-view-menu-create-pr = Create PR
 code-review-view-menu-add-diff-context = Add diff set as context
@@ -122,3 +134,5 @@ code-review-view-menu-add-comment = Add comment
 code-review-view-menu-discard-all = Discard all
 code-review-view-header-reviewing = Reviewing code changes
 code-review-view-toast-repo-changed = Code Review: Repository changed. Branch list cleared.
+code-review-view-repo-initialized-with-file = Repo is initialized with a { $file_name } file.
+code-review-view-unsaved-file-tooltip = This file has unsaved changes. { $shortcut } to save
