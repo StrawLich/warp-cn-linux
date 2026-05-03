@@ -22,6 +22,7 @@ use warp_core::ui::theme::color::internal_colors::{neutral_1, neutral_2, text_su
 use warp_core::ui::theme::Fill;
 use warp_editor::content::buffer::InitialBufferState;
 use warp_editor::render::element::VerticalExpansionBehavior;
+use warp_i18n::t;
 use warpui::elements::new_scrollable::ScrollableAppearance;
 use warpui::elements::ScrollbarWidth;
 use warpui::elements::{
@@ -30,7 +31,6 @@ use warpui::elements::{
 };
 use warpui::platform::Cursor;
 use warpui::text_layout::ClipConfig;
-use warp_i18n::t;
 use warpui::units::Pixels;
 use warpui::{AppContext, Element, EventContext, SingletonEntity, View, ViewContext, ViewHandle};
 

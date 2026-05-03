@@ -922,13 +922,17 @@ impl CommentListView {
         } else if !ai_enabled {
             Cow::Owned(warp_i18n::t!("code-review-comment-list-ai-disabled"))
         } else if !ai_available {
-            Cow::Owned(warp_i18n::t!("code-review-comment-list-ai-credits-required"))
+            Cow::Owned(warp_i18n::t!(
+                "code-review-comment-list-ai-credits-required"
+            ))
         } else if matches!(destination, ReviewDestination::None) {
             Cow::Owned(warp_i18n::t!("code-review-comment-list-all-terminals-busy"))
         } else if !has_sendable_comments {
             Cow::Owned(warp_i18n::t!("code-review-comment-list-no-non-outdated"))
         } else {
-            Cow::Owned(warp_i18n::t!("code-review-comment-list-send-to-agent-tooltip"))
+            Cow::Owned(warp_i18n::t!(
+                "code-review-comment-list-send-to-agent-tooltip"
+            ))
         }
     }
 
@@ -963,7 +967,9 @@ impl CommentListView {
                 ButtonVariant::Accent,
                 self.view_state.submit_button_mouse_state.clone(),
             )
-            .with_text_label(warp_i18n::t!("code-review-comment-list-send-to-agent-button"))
+            .with_text_label(warp_i18n::t!(
+                "code-review-comment-list-send-to-agent-button"
+            ))
             .with_tooltip(|| tooltip)
             .with_tooltip_position(ButtonTooltipPosition::AboveLeft);
 
@@ -1072,10 +1078,13 @@ impl CommentListView {
         html_url: Option<&str>,
         appearance: &Appearance,
     ) -> Vec<MenuItem<CommentListAction>> {
-        let mut items = vec![MenuItemFields::new(warp_i18n::t!("code-review-comment-list-menu-copy-text"))
-            .with_icon(Icon::Copy)
-            .with_on_select_action(CommentListAction::CopyCommentText)
-            .into_item()];
+        let mut items =
+            vec![
+                MenuItemFields::new(warp_i18n::t!("code-review-comment-list-menu-copy-text"))
+                    .with_icon(Icon::Copy)
+                    .with_on_select_action(CommentListAction::CopyCommentText)
+                    .into_item(),
+            ];
 
         let mut edit_item = MenuItemFields::new("Edit")
             .with_icon(Icon::Pencil)
@@ -1092,12 +1101,14 @@ impl CommentListView {
 
         if let Some(url) = html_url {
             items.push(
-                MenuItemFields::new(warp_i18n::t!("code-review-comment-list-menu-view-in-github"))
-                    .with_icon(Icon::Github)
-                    .with_on_select_action(CommentListAction::ViewInGitHub {
-                        url: url.to_string(),
-                    })
-                    .into_item(),
+                MenuItemFields::new(warp_i18n::t!(
+                    "code-review-comment-list-menu-view-in-github"
+                ))
+                .with_icon(Icon::Github)
+                .with_on_select_action(CommentListAction::ViewInGitHub {
+                    url: url.to_string(),
+                })
+                .into_item(),
             );
         }
 

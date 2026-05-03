@@ -237,9 +237,10 @@ pub(super) fn show_pr_created_toast(pr_info: &PrInfo, ctx: &mut ViewContext<GitD
     let window_id = ctx.window_id();
     let url = pr_info.url.clone();
     ToastStack::handle(ctx).update(ctx, |toast_stack, ctx| {
-        let link = ToastLink::new(warp_i18n::t!("code-review-git-pr-toast-open-link")).with_href(url);
-        let toast =
-            DismissibleToast::default(warp_i18n::t!("code-review-git-pr-toast-created")).with_link(link);
+        let link =
+            ToastLink::new(warp_i18n::t!("code-review-git-pr-toast-open-link")).with_href(url);
+        let toast = DismissibleToast::default(warp_i18n::t!("code-review-git-pr-toast-created"))
+            .with_link(link);
         toast_stack.add_ephemeral_toast(toast, window_id, ctx);
     });
 }
