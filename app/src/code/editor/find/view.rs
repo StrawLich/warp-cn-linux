@@ -10,6 +10,7 @@ use crate::send_telemetry_from_ctx;
 use crate::server::telemetry::{FindOption, TelemetryEvent};
 use crate::themes::theme::Fill;
 use crate::ui_components::{blended_colors, icons::Icon};
+use crate::util::bindings::BindingDescriptionFluentExt;
 use crate::view_components::action_button::{ActionButton, DisabledSecondaryTheme, SecondaryTheme};
 use crate::view_components::find::FindDirection;
 use crate::{features::FeatureFlag, settings::AppEditorSettings};
@@ -18,7 +19,6 @@ use warp_editor::editor::NavigationKey;
 use warp_editor::search::{SearchEvent, Searcher};
 use warpui::elements::MainAxisAlignment;
 use warpui::elements::{ChildAnchor, OffsetPositioning, Radius, SavePosition, Shrinkable};
-use crate::util::bindings::BindingDescriptionFluentExt;
 use warpui::keymap::{BindingDescription, EditableBinding};
 use warpui::ui_components::components::UiComponent;
 pub use warpui::{

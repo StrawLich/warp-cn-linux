@@ -531,12 +531,10 @@ impl EditorModel {
                 };
                 AccessibilityContent::new(delta, action_suffix, WarpA11yRole::UserAction)
             }
-            (true, false) => {
-                AccessibilityContent::new_without_help(
-                    warp_i18n::t!("a11y-editor-unselected").to_string(),
-                    WarpA11yRole::UserAction,
-                )
-            }
+            (true, false) => AccessibilityContent::new_without_help(
+                warp_i18n::t!("a11y-editor-unselected").to_string(),
+                WarpA11yRole::UserAction,
+            ),
         }
     }
 

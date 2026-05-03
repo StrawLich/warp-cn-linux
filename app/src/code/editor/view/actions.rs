@@ -7,9 +7,13 @@ use crate::code::editor::{
     view::{CodeEditorEvent, CodeEditorView, VimMode},
 };
 use crate::{
-    cmd_or_ctrl_shift, code_review::comments::CommentId,
-    code_review::telemetry_event::CodeReviewTelemetryEvent, editor::InteractionState,
-    features::FeatureFlag, notebooks::editor::model::word_unit, send_telemetry_from_ctx,
+    cmd_or_ctrl_shift,
+    code_review::comments::CommentId,
+    code_review::telemetry_event::CodeReviewTelemetryEvent,
+    editor::InteractionState,
+    features::FeatureFlag,
+    notebooks::editor::model::word_unit,
+    send_telemetry_from_ctx,
     util::bindings::{BindingDescriptionFluentExt, CustomAction},
 };
 use lazy_static::lazy_static;
@@ -507,9 +511,13 @@ pub fn init(app: &mut AppContext) {
         )
         .with_context_predicate(text_entry.clone())
         .with_key_binding("cmdorctrl-/"),
-        EditableBinding::new("editor_view:delete", BindingDescription::fluent("binding-code-editor-delete"), CodeEditorViewAction::Delete)
-            .with_context_predicate(text_entry.clone())
-            .with_key_binding("ctrl-d"),
+        EditableBinding::new(
+            "editor_view:delete",
+            BindingDescription::fluent("binding-code-editor-delete"),
+            CodeEditorViewAction::Delete,
+        )
+        .with_context_predicate(text_entry.clone())
+        .with_key_binding("ctrl-d"),
         EditableBinding::new(
             "editor_view:cut_word_left",
             BindingDescription::fluent("binding-code-editor-cut-word-left"),

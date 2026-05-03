@@ -257,7 +257,9 @@ impl QueryFilter {
             QueryFilter::StaticSlashCommands => "search-filter-placeholder-static-slash-commands",
             QueryFilter::Skills => "search-filter-placeholder-skills",
             QueryFilter::BaseModels => "search-filter-placeholder-base-models",
-            QueryFilter::FullTerminalUseModels => "search-filter-placeholder-full-terminal-use-models",
+            QueryFilter::FullTerminalUseModels => {
+                "search-filter-placeholder-full-terminal-use-models"
+            }
             QueryFilter::CurrentDirectoryConversations => {
                 "search-filter-placeholder-current-directory-conversations"
             }

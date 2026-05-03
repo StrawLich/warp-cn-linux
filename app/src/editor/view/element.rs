@@ -9,7 +9,6 @@ use super::{
 };
 use super::{position_id_for_cursor, LocalDrawableSelectionData, ReplicaId};
 use crate::appearance::Appearance;
-use warp_i18n::t;
 use crate::editor::accept_autosuggestion_keybinding_view::{
     AcceptAutosuggestionKeybinding, AUTOSUGGESTION_HINT_MINIMUM_HEIGHT,
 };
@@ -26,6 +25,7 @@ use pathfinder_geometry::{
 use vim::vim::{MotionType, VimMode};
 use warp_core::features::FeatureFlag;
 use warp_core::ui::appearance::DEFAULT_UI_FONT_SIZE;
+use warp_i18n::t;
 use warp_util::user_input::UserInput;
 use warpui::event::KeyState;
 use warpui::text_selection_utils::{

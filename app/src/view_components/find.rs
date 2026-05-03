@@ -10,9 +10,9 @@ use crate::ui_components::{blended_colors, icons::Icon};
 use serde::Serialize;
 
 use crate::themes::theme::Fill;
+use crate::util::bindings::BindingDescriptionFluentExt;
 use pathfinder_color::ColorU;
 use warpui::elements::{ChildAnchor, OffsetPositioning, Radius, SavePosition, Shrinkable};
-use crate::util::bindings::BindingDescriptionFluentExt;
 use warpui::keymap::{BindingDescription, EditableBinding};
 use warpui::ui_components::components::UiComponent;
 pub use warpui::{
