@@ -1,9 +1,9 @@
 name: Build Mac App (unsigned)
 
-# 仅 workflow_dispatch（手动）触发。
-# 出 release 时按 playbook 用 `--ref <tag>` 触发：在 tag ref 下 dispatch
-# 仍然走 `github.ref_type == 'tag'` 分支完成 minisign + Publish Release。
-# 不再监听 push.tags，避免每次打 tag 自动出一个 debug 包浪费 CI 分钟数。
+# 两种触发：
+# 1) workflow_dispatch（手动）：开发者按需出包；profile/channel 可选；架构始终双跑。
+# 2) push tags v*：自动 release-lto 双架构 + minisign 签名 + 创建 GitHub Release，
+#    供 in-app github_update 拉取。tag 触发使用固定参数 oss/release，架构由 matrix 双跑。
 on:
   workflow_dispatch:
     inputs:
@@ -16,14 +16,6 @@ on:
           - oss
           - dev
           - local
-      arch:
-        description: '目标架构'
-        required: true
-        default: aarch64
-        type: choice
-        options:
-          - aarch64
-          - x86_64
       profile:
         description: '编译 profile (debug=cargo dev profile, ~25-35 min；release=release-lto, 200+ min on free runner)'
         required: true
@@ -32,14 +24,23 @@ on:
         options:
           - debug
           - release
+  push:
+    tags:
+      - 'v*'
 
-# 在 tag ref 下 dispatch 时需要 contents:write 才能调 `gh release create`。
+# tag 触发时需要 contents:write 才能调 `gh release create`。
 permissions:
   contents: write
 
 jobs:
   build:
-    name: Build ${{ inputs.channel || 'oss' }} (${{ inputs.arch || 'aarch64' }})
+    name: Build ${{ inputs.channel || 'oss' }} (${{ matrix.arch }})
+    # 双架构 matrix：tag push 与 dispatch 都同时出 aarch64 + x86_64。
+    # 单跑某架构时仍可在 GitHub Actions UI 上单独 re-run matrix 子 job。
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [aarch64, x86_64]
     # 用 GitHub 免费 macos-14（M1 4-core）。自托管 LaunchAgent 跑 create-dmg 时
     # AppleScript 控 Finder 必超时（无 Aqua GUI session），DMG 美化无法完成；
     # 美化要的话只能走 hosted runner 或 ./run.sh 前台模式（不稳）。
@@ -72,13 +73,13 @@ jobs:
           df -h /
 
       - name: Add Rust target
-        run: rustup target add ${{ inputs.arch || 'aarch64' }}-apple-darwin
+        run: rustup target add ${{ matrix.arch }}-apple-darwin
 
       - name: Setup Rust cache
         uses: Swatinem/rust-cache@v2
         with:
           # 不同架构 / 档次 / profile 分别缓存（profile 影响 target 子目录与编译产物）
-          key: mac-${{ inputs.arch || 'aarch64' }}-${{ inputs.channel || 'oss' }}-${{ inputs.profile || 'debug' }}
+          key: mac-${{ matrix.arch }}-${{ inputs.channel || 'oss' }}-${{ inputs.profile || 'release' }}
           # 只在 master 上保存缓存，分支只读
           save-if: ${{ github.ref == 'refs/heads/master' }}
 
@@ -153,10 +154,10 @@ jobs:
           BUNDLE_ARGS=(
             --selfsign
             --channel "${{ inputs.channel || 'oss' }}"
-            --arch "${{ inputs.arch || 'aarch64' }}"
-            --dmg-name-suffix "${{ inputs.arch || 'aarch64' }}"
+            --arch "${{ matrix.arch }}"
+            --dmg-name-suffix "${{ matrix.arch }}"
           )
-          if [ "${{ inputs.profile || 'debug' }}" = "debug" ]; then
+          if [ "${{ inputs.profile || 'release' }}" = "debug" ]; then
             BUNDLE_ARGS+=(--debug)
           fi
           ./script/bundle "${BUNDLE_ARGS[@]}"
@@ -179,7 +180,7 @@ jobs:
       - name: Upload DMG
         uses: actions/upload-artifact@v7
         with:
-          name: warp-${{ inputs.channel || 'oss' }}-${{ inputs.arch || 'aarch64' }}-${{ inputs.profile || 'debug' }}-dmg
+          name: warp-${{ inputs.channel || 'oss' }}-${{ matrix.arch }}-${{ inputs.profile || 'release' }}-dmg
           path: ${{ steps.paths.outputs.dmg_path }}
           if-no-files-found: error
           retention-days: 14
@@ -193,7 +194,7 @@ jobs:
       - name: Upload .app artifact
         uses: actions/upload-artifact@v7
         with:
-          name: warp-${{ inputs.channel || 'oss' }}-${{ inputs.arch || 'aarch64' }}-${{ inputs.profile || 'debug' }}-app
+          name: warp-${{ inputs.channel || 'oss' }}-${{ matrix.arch }}-${{ inputs.profile || 'release' }}-app
           path: ${{ steps.paths.outputs.out_dir }}/app-bundle.zip
           if-no-files-found: error
           retention-days: 14
@@ -239,16 +240,30 @@ jobs:
           TAG="${{ github.ref_name }}"
           TARBALL="${{ steps.bundle.outputs.tarball_path }}"
           DMG="${{ steps.paths.outputs.dmg_path }}"
-          # release 已存在则上传到现有 release（多架构构建分别上传到同一 tag）。
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "Release $TAG exists; uploading assets to it"
-            gh release upload "$TAG" "$TARBALL" "${TARBALL}.minisig" "$DMG" --clobber
-          else
-            gh release create "$TAG" \
-              "$TARBALL" "${TARBALL}.minisig" "$DMG" \
-              --title "$TAG" \
-              --generate-notes
-          fi
+          # 双架构 matrix 同步收尾时两个 job 可能同时看到 release 不存在并各自
+          # 调 `gh release create`，第二个会撞 already_exists。重试到 release 出现
+          # 后切到 upload 分支即可。
+          for attempt in 1 2 3 4 5; do
+            if gh release view "$TAG" >/dev/null 2>&1; then
+              echo "Release $TAG exists; uploading assets"
+              gh release upload "$TAG" "$TARBALL" "${TARBALL}.minisig" "$DMG" --clobber
+              exit 0
+            fi
+            if gh release create "$TAG" \
+                 "$TARBALL" "${TARBALL}.minisig" "$DMG" \
+                 --title "$TAG" \
+                 --generate-notes 2> /tmp/gh.err; then
+              exit 0
+            fi
+            if grep -qiE 'already.exists|exists with tag' /tmp/gh.err; then
+              sleep $((attempt * 3))
+              continue
+            fi
+            cat /tmp/gh.err >&2
+            exit 1
+          done
+          echo "::error::failed to publish release $TAG after retries"
+          exit 1
         shell: bash
 
       # 把 keychain search list 还原成原样，避免后续在同一 runner 上的其他工作流受影响。
