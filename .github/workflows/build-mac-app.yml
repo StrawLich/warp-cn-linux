@@ -1,10 +1,9 @@
 name: Build Mac App (unsigned)
 
-# 两种触发：
-# 1) workflow_dispatch（手动）：开发者按需出包，不发布 release。
-# 2) push tags v*：自动构建 + minisign 签名 + 创建 GitHub Release，
-#    供 in-app github_update 拉取。tag 触发使用固定参数（oss/aarch64/debug）
-#    走最快路径；正式 release 想换 profile/arch 仍可手动 dispatch。
+# 仅 workflow_dispatch（手动）触发。
+# 出 release 时按 playbook 用 `--ref <tag>` 触发：在 tag ref 下 dispatch
+# 仍然走 `github.ref_type == 'tag'` 分支完成 minisign + Publish Release。
+# 不再监听 push.tags，避免每次打 tag 自动出一个 debug 包浪费 CI 分钟数。
 on:
   workflow_dispatch:
     inputs:
@@ -28,16 +27,13 @@ on:
       profile:
         description: '编译 profile (debug=cargo dev profile, ~25-35 min；release=release-lto, 200+ min on free runner)'
         required: true
-        default: debug
+        default: release
         type: choice
         options:
           - debug
           - release
-  push:
-    tags:
-      - 'v*'
 
-# tag 触发时需要 contents:write 才能调 `gh release create`。
+# 在 tag ref 下 dispatch 时需要 contents:write 才能调 `gh release create`。
 permissions:
   contents: write
 
