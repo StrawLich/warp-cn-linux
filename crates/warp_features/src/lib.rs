@@ -958,6 +958,8 @@ pub const RELEASE_FLAGS: &[FeatureFlag] = &[
     FeatureFlag::SshRemoteServer,
     // warp-cn fork: surface the agent toolbar layout editor in all release builds.
     FeatureFlag::AgentToolbarEditor,
+    // warp-cn fork: route codebase indexing through local Auggie MCP for accountless usage.
+    FeatureFlag::AuggieCodebaseIndex,
 ];
 
 /// Flags that we want to allow to switch at runtime (assuming RuntimeFeatureFlags is set)
