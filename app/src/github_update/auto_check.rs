@@ -10,11 +10,12 @@
 
 use std::time::Duration;
 
+use warpui::r#async::Timer;
 use warpui::windowing::WindowManager;
-use warpui::{AppContext, Entity, ModelContext, SingletonEntity, Timer};
+use warpui::{AppContext, Entity, ModelContext, SingletonEntity};
 
 use crate::view_components::DismissibleToast;
-use crate::workspace::toast_stack::ToastStack;
+use crate::workspace::{ToastStack, WorkspaceAction};
 
 use super::GithubUpdateState;
 
@@ -71,7 +72,7 @@ impl UpdateNotificationModel {
             tag = tag.as_str()
         )
         .to_string();
-        let toast = DismissibleToast::default(text);
+        let toast = DismissibleToast::<WorkspaceAction>::default(text);
         ToastStack::handle(ctx).update(ctx, |stack, ctx| {
             stack.add_persistent_toast(toast, window_id, ctx);
         });

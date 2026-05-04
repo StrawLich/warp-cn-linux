@@ -20,7 +20,8 @@ use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use warp_core::channel::ChannelState;
 use warp_core::paths;
-use warpui::{AppContext, Entity, ModelContext, SingletonEntity, Timer};
+use warpui::r#async::Timer;
+use warpui::{AppContext, Entity, ModelContext, SingletonEntity};
 
 mod auto_check;
 #[cfg(target_os = "macos")]

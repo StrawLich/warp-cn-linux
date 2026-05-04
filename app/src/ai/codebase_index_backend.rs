@@ -3,6 +3,7 @@
 //! Single source of truth: when upstream renames `FullSourceCodeEmbedding` or
 //! reshapes the gate logic, only this module needs to change.
 
+use settings::Setting;
 use warpui::{AppContext, SingletonEntity};
 
 use crate::{
