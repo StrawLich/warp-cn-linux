@@ -138,6 +138,8 @@ use crate::ai::mcp::FileBasedMCPManager;
 use crate::ai::mcp::FileMCPWatcher;
 use crate::uri::web_intent_parser::maybe_rewrite_web_url_to_intent;
 use ::ai::index::full_source_code_embedding::manager::CodebaseIndexManager;
+#[cfg(all(not(target_family = "wasm"), feature = "auggie_codebase_index"))]
+use ::ai::index::full_source_code_embedding::store_client::StoreClient;
 use ::ai::index::full_source_code_embedding::SyncTask;
 use ::ai::index::DEFAULT_SYNC_REQUESTS_PER_MIN;
 use ::ai::project_context::model::ProjectContextModel;
@@ -196,6 +198,13 @@ use window_settings::WindowSettings;
 use workflows::manager::WorkflowManager;
 
 use crate::ai::ambient_agents::github_auth_notifier::GitHubAuthNotifier;
+#[cfg(all(not(target_family = "wasm"), feature = "auggie_codebase_index"))]
+use crate::ai::auggie_mcp::AuggieMcpClientModel;
+use crate::ai::codebase_index_backend::{
+    codebase_context_limits_for_backend, is_codebase_context_enabled_for_indexing,
+};
+#[cfg(all(not(target_family = "wasm"), feature = "auggie_codebase_index"))]
+use crate::ai::codebase_index_backend::is_local_codebase_index_backend;
 use crate::ai::document::ai_document_model::AIDocumentModel;
 use crate::ai::facts::manager::AIFactManager;
 use crate::ai::llms::LLMPreferences;
@@ -1842,8 +1851,15 @@ fn initialize_app(
 
     ctx.add_singleton_model(DefaultTerminal::new);
 
+    #[cfg(all(not(target_family = "wasm"), feature = "auggie_codebase_index"))]
+    if is_local_codebase_index_backend(ctx) {
+        // Lazy holder only — AuggieMcpService::spawn() runs on first use so app
+        // startup never blocks on auggie process creation or MCP initialize.
+        ctx.add_singleton_model(AuggieMcpClientModel::new);
+    }
+
     ctx.add_singleton_model(|ctx| {
-        let indices_to_restore = if UserWorkspaces::as_ref(ctx).is_codebase_context_enabled(ctx)
+        let indices_to_restore = if is_codebase_context_enabled_for_indexing(ctx)
             && launch_mode.supports_indexing()
         {
             persisted_workspaces.clone()
@@ -1851,14 +1867,28 @@ fn initialize_app(
             vec![]
         };
 
-        let codebase_limits = AIRequestUsageModel::as_ref(ctx).codebase_context_limits();
+        let codebase_limits = codebase_context_limits_for_backend(ctx);
+
+        #[cfg(all(not(target_family = "wasm"), feature = "auggie_codebase_index"))]
+        let store_client: Arc<dyn StoreClient> = if is_local_codebase_index_backend(ctx) {
+            use crate::ai::auggie_store_client::AuggieStoreClient;
+
+            let mcp_client =
+                AuggieMcpClientModel::handle(ctx).read(ctx, |model, _| model.client_handle());
+            Arc::new(AuggieStoreClient::new(mcp_client))
+        } else {
+            server_api_provider.as_ref(ctx).get()
+        };
+
+        #[cfg(not(all(not(target_family = "wasm"), feature = "auggie_codebase_index")))]
+        let store_client = server_api_provider.as_ref(ctx).get();
 
         CodebaseIndexManager::new(
             indices_to_restore,
             codebase_limits.max_indices_allowed,
             codebase_limits.max_files_per_repo,
             codebase_limits.embedding_generation_batch_size,
-            server_api_provider.as_ref(ctx).get(),
+            store_client,
             ctx,
         )
     });
@@ -2581,6 +2611,8 @@ pub fn enabled_features() -> HashSet<FeatureFlag> {
         FeatureFlag::PredictAMQueries,
         #[cfg(feature = "full_source_code_embedding")]
         FeatureFlag::FullSourceCodeEmbedding,
+        #[cfg(feature = "auggie_codebase_index")]
+        FeatureFlag::AuggieCodebaseIndex,
         #[cfg(feature = "use_tantivy_search")]
         FeatureFlag::UseTantivySearch,
         #[cfg(feature = "grep_tool")]

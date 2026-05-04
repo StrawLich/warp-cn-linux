@@ -9,7 +9,11 @@ mod snapshot;
 pub mod store_client;
 mod sync_client;
 
-use std::{ops::Range, path::PathBuf, time::Duration};
+use std::{
+    ops::Range,
+    path::{Path, PathBuf},
+    time::Duration,
+};
 pub use sync_client::SyncTask;
 
 pub use codebase_index::{CodebaseIndex, RetrievalID, SyncProgress};
@@ -154,11 +158,31 @@ pub struct FragmentLocation {
     byte_range: Range<ByteOffset>,
 }
 
+impl FragmentLocation {
+    pub fn absolute_path(&self) -> &Path {
+        &self.absolute_path
+    }
+
+    pub fn byte_range(&self) -> Range<ByteOffset> {
+        self.byte_range.clone()
+    }
+}
+
 #[derive(Clone)]
 pub struct Fragment {
     content: String,
     content_hash: ContentHash,
     location: FragmentLocation,
+}
+
+impl Fragment {
+    pub fn content_hash(&self) -> &ContentHash {
+        &self.content_hash
+    }
+
+    pub fn location(&self) -> &FragmentLocation {
+        &self.location
+    }
 }
 
 impl From<Fragment> for warp_graphql::full_source_code_embedding::Fragment {

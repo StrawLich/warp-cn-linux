@@ -463,6 +463,9 @@ crash_reporting = [
 creating_shared_sessions = []
 cross_repo_context = []
 codebase_index_persistence = ["full_source_code_embedding"]
+# warp-cn: routes codebase indexing through a local Auggie MCP backend instead
+# of the Warp-cloud GraphQL StoreClient. Independent of full_source_code_embedding.
+auggie_codebase_index = []
 default = [
     "agent_mode",
     "viewing_shared_sessions",

@@ -269,6 +269,13 @@ pub enum FeatureFlag {
     /// Enables full source code embedding of repos when using codebase context.
     FullSourceCodeEmbedding,
 
+    /// Routes codebase index retrieval through a local Auggie (Augment context
+    /// engine) MCP server instead of the Warp-cloud GraphQL StoreClient.
+    /// Designed for warp-cn users without a Warp account. Coexists with
+    /// `FullSourceCodeEmbedding`; cloud path wins when both are enabled and
+    /// the user is logged in.
+    AuggieCodebaseIndex,
+
     /// If enabled, command palette searches will use Tantivy search instead of the default fuzzy search.
     UseTantivySearch,
 

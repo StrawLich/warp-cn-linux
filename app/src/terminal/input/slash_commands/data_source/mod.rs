@@ -233,7 +233,7 @@ impl SlashCommandDataSource {
             session_context |= Availability::ACTIVE_CONVERSATION;
         }
 
-        if UserWorkspaces::as_ref(ctx).is_codebase_context_enabled(ctx) {
+        if crate::ai::codebase_index_backend::is_codebase_context_enabled_for_indexing(ctx) {
             session_context |= Availability::CODEBASE_CONTEXT;
         }
 

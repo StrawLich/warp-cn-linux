@@ -179,12 +179,12 @@ impl InitProjectModel {
     pub fn should_have_available_steps(path: &Path, ctx: &warpui::AppContext) -> bool {
         // Note that we consider auto-indexing setting to true to satisfy the codebase context step.
         // This avoids the potential race condition with the banner showing just when we start auto-indexing.
-        let has_pending_codebase_context = UserWorkspaces::as_ref(ctx)
-            .is_codebase_context_enabled(ctx)
-            && CodebaseIndexManager::as_ref(ctx)
-                .get_codebase_index_status_for_path(path, ctx)
-                .is_none()
-            && !*CodeSettings::as_ref(ctx).auto_indexing_enabled;
+        let has_pending_codebase_context =
+            crate::ai::codebase_index_backend::is_codebase_context_enabled_for_indexing(ctx)
+                && CodebaseIndexManager::as_ref(ctx)
+                    .get_codebase_index_status_for_path(path, ctx)
+                    .is_none()
+                && !*CodeSettings::as_ref(ctx).auto_indexing_enabled;
 
         let has_pending_project_scoped_rules = ProjectContextModel::as_ref(ctx)
             .find_applicable_rules(path)
@@ -364,7 +364,7 @@ impl InitProjectModel {
     }
 
     fn compute_codebase_context_step(&mut self, pwd_path: &Path, ctx: &mut ModelContext<Self>) {
-        if !UserWorkspaces::as_ref(ctx).is_codebase_context_enabled(ctx) {
+        if !crate::ai::codebase_index_backend::is_codebase_context_enabled_for_indexing(ctx) {
             // Feature disabled, leave as None
             return;
         }

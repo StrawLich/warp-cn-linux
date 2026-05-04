@@ -625,7 +625,7 @@ impl PersistedWorkspace {
     /// Enables or disables codebase indexing according to the setting.
     fn maybe_enable_codebase_indexing(ctx: &mut ModelContext<Self>) {
         CodebaseIndexManager::handle(ctx).update(ctx, |manager, ctx| {
-            if UserWorkspaces::as_ref(ctx).is_codebase_context_enabled(ctx) {
+            if crate::ai::codebase_index_backend::is_codebase_context_enabled_for_indexing(ctx) {
                 Self::enable_codebase_indexing(manager, ctx);
             } else {
                 manager.reset_codebase_indexing(ctx);
@@ -637,8 +637,8 @@ impl PersistedWorkspace {
         manager: &mut CodebaseIndexManager,
         ctx: &mut ModelContext<CodebaseIndexManager>,
     ) {
-        let request_model = AIRequestUsageModel::handle(ctx);
-        let codebase_limits = request_model.as_ref(ctx).codebase_context_limits();
+        let codebase_limits =
+            crate::ai::codebase_index_backend::codebase_context_limits_for_backend(ctx);
         manager.update_max_limits(
             codebase_limits.max_indices_allowed,
             codebase_limits.max_files_per_repo,
@@ -665,10 +665,10 @@ impl PersistedWorkspace {
             let _ = model.index_and_store_rules(directory_path.clone(), ctx);
         });
 
-        if FeatureFlag::FullSourceCodeEmbedding.is_enabled() {
-            let auto_indexing_enabled = UserWorkspaces::as_ref(ctx)
-                .is_codebase_context_enabled(ctx)
-                && *CodeSettings::as_ref(ctx).auto_indexing_enabled;
+        if crate::ai::codebase_index_backend::is_codebase_index_feature_available(ctx) {
+            let auto_indexing_enabled =
+                crate::ai::codebase_index_backend::is_codebase_context_enabled_for_indexing(ctx)
+                    && *CodeSettings::as_ref(ctx).auto_indexing_enabled;
 
             if auto_indexing_enabled {
                 CodebaseIndexManager::handle(ctx).update(ctx, |manager, ctx| {
@@ -793,7 +793,7 @@ impl PersistedWorkspace {
         terminal_view_id: warpui::EntityId,
         ctx: &mut ModelContext<Self>,
     ) {
-        if !UserWorkspaces::as_ref(ctx).is_codebase_context_enabled(ctx) {
+        if !crate::ai::codebase_index_backend::is_codebase_context_enabled_for_indexing(ctx) {
             return;
         }
 

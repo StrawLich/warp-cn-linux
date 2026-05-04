@@ -131,7 +131,7 @@ impl RepoOutlines {
     /// Check if outlines should be built based on if codebase context enabled OR
     /// outline codebase symbols for @ context menu settings.
     fn should_build_outlines(ctx: &ModelContext<Self>) -> bool {
-        UserWorkspaces::as_ref(ctx).is_codebase_context_enabled(ctx)
+        crate::ai::codebase_index_backend::is_codebase_context_enabled_for_indexing(ctx)
             || *InputSettings::as_ref(ctx)
                 .outline_codebase_symbols_for_at_context_menu
                 .value()
