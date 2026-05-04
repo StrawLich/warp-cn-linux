@@ -261,7 +261,7 @@ async fn spawn_connection() -> Result<AuggieMcpConnection, AuggieMcpError> {
         .into_dyn()
         .serve(transport)
         .await
-        .map_err(map_rmcp_error)?;
+        .map_err(|err| AuggieMcpError::Spawn(err.to_string()))?;
 
     let tools = match service.list_all_tools().await {
         Ok(tools) => tools,
@@ -306,18 +306,6 @@ fn make_client_info() -> rmcp::model::ClientInfo {
             icons: None,
             website_url: None,
         },
-    }
-}
-
-fn map_rmcp_error(err: rmcp::RmcpError) -> AuggieMcpError {
-    match err {
-        rmcp::RmcpError::Service(rmcp::ServiceError::TransportClosed) => {
-            AuggieMcpError::TransportClosed
-        }
-        rmcp::RmcpError::TransportCreation { .. } | rmcp::RmcpError::ClientInitialize(_) => {
-            AuggieMcpError::Spawn(err.to_string())
-        }
-        other => AuggieMcpError::Other(anyhow!(other)),
     }
 }
 
