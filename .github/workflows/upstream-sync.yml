@@ -1,10 +1,11 @@
 name: Upstream Sync
 
-# 每周一 01:00 UTC（Asia/Shanghai 09:00）自动从 warpdotdev/warp 拉取并尝试合并；也可在 Actions 页面手动触发。
+# 每周一 01:17 UTC（Asia/Shanghai 09:17）自动从 warpdotdev/warp 拉取并尝试合并；也可在 Actions 页面手动触发。
+# cron 故意错开整点：GitHub 官方文档指出整点（分钟=0）是 schedule 高负载时段，常被延迟 5–30 分钟。
 # 干净合并 → i18n-lint → 自动开 PR；冲突 → 把 sync/<date> 分支推上去 + 开 issue。
 on:
   schedule:
-    - cron: '0 1 * * 1'
+    - cron: '17 1 * * 1'
   workflow_dispatch:
 
 permissions:
