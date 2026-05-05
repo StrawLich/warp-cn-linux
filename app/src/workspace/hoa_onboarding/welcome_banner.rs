@@ -22,30 +22,30 @@ const HERO_IMAGE_PATH: &str = "async/png/onboarding/hoa_welcome_banner.png";
 
 struct FeatureItem {
     icon: Icon,
-    title: &'static str,
-    description: &'static str,
+    title_key: &'static str,
+    description_key: &'static str,
 }
 
 const FEATURE_ITEMS: &[FeatureItem] = &[
     FeatureItem {
         icon: Icon::LayoutAlt01,
-        title: "Vertical tabs",
-        description: "Rich tab titles and metadata like git branch, worktree, and PR. Fully customizable.",
+        title_key: "onboarding-hoa-feature-vertical-tabs-title",
+        description_key: "onboarding-hoa-feature-vertical-tabs-desc",
     },
     FeatureItem {
         icon: Icon::Sliders,
-        title: "Tab configs",
-        description: "Tab-level schema to set your directory, startup commands, theme, and worktree with one click",
+        title_key: "onboarding-hoa-feature-tab-configs-title",
+        description_key: "onboarding-hoa-feature-tab-configs-desc",
     },
     FeatureItem {
         icon: Icon::Inbox,
-        title: "Agent inbox",
-        description: "Notifications when any agent needs your attention, also accessible in a central inbox",
+        title_key: "onboarding-hoa-feature-agent-inbox-title",
+        description_key: "onboarding-hoa-feature-agent-inbox-desc",
     },
     FeatureItem {
         icon: Icon::MessageCheckSquare,
-        title: "Native code review",
-        description: "Send inline comments from Warp's code review directly to Claude Code, Codex, or OpenCode",
+        title_key: "onboarding-hoa-feature-code-review-title",
+        description_key: "onboarding-hoa-feature-code-review-desc",
     },
 ];
 
@@ -85,11 +85,14 @@ pub fn render_welcome_banner(
         ),
     );
 
-    // "New" badge
     let badge = Container::new(
-        Text::new_inline("New".to_string(), appearance.ui_font_family(), 14.)
-            .with_color(PhenomenonStyle::modal_badge_text())
-            .finish(),
+        Text::new_inline(
+            t!("onboarding-feature-popup-new"),
+            appearance.ui_font_family(),
+            14.,
+        )
+        .with_color(PhenomenonStyle::modal_badge_text())
+        .finish(),
     )
     .with_horizontal_padding(8.)
     .with_vertical_padding(2.)
@@ -126,14 +129,22 @@ pub fn render_welcome_banner(
             .with_cross_axis_alignment(CrossAxisAlignment::Start)
             .with_spacing(2.)
             .with_child(
-                Text::new_inline(item.title.to_string(), appearance.ui_font_family(), 14.)
-                    .with_color(PhenomenonStyle::modal_feature_title_text())
-                    .finish(),
+                Text::new_inline(
+                    warp_i18n::tr!(item.title_key),
+                    appearance.ui_font_family(),
+                    14.,
+                )
+                .with_color(PhenomenonStyle::modal_feature_title_text())
+                .finish(),
             )
             .with_child(
-                Text::new(item.description, appearance.ui_font_family(), 14.)
-                    .with_color(PhenomenonStyle::modal_feature_description_text())
-                    .finish(),
+                Text::new(
+                    warp_i18n::tr!(item.description_key),
+                    appearance.ui_font_family(),
+                    14.,
+                )
+                .with_color(PhenomenonStyle::modal_feature_description_text())
+                .finish(),
             )
             .finish();
 

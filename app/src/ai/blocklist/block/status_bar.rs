@@ -731,7 +731,7 @@ impl BlocklistAIStatusBar {
             if let Some(tip) = self.current_tip.as_ref() {
                 send_telemetry_from_app_ctx!(
                     TelemetryEvent::AgentTipShown {
-                        tip: tip.description.clone()
+                        tip: tip.description_key.to_string()
                     },
                     ctx
                 );
@@ -1003,7 +1003,7 @@ fn render_agent_tip(tip: &AgentTip, app: &AppContext) -> Box<dyn Element> {
     let appearance = Appearance::as_ref(app);
     let theme = appearance.theme();
 
-    let tip_description = tip.description.clone();
+    let tip_description = tip.description_key.to_string();
     let action_text = tip.action.clone().and_then(|action| action.display_text());
 
     let mut fragments = tip.to_formatted_text(app);
@@ -1013,7 +1013,10 @@ fn render_agent_tip(tip: &AgentTip, app: &AppContext) -> Box<dyn Element> {
         fragments.push(FormattedTextFragment::hyperlink_action(text, action));
     } else if let Some(link_target) = tip.link.clone() {
         fragments.push(FormattedTextFragment::plain_text(" "));
-        fragments.push(FormattedTextFragment::hyperlink("Learn more", link_target));
+        fragments.push(FormattedTextFragment::hyperlink(
+            warp_i18n::t!("ai-ui-learn-more"),
+            link_target,
+        ));
     }
 
     let formatted_text =

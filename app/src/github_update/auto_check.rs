@@ -67,11 +67,7 @@ impl UpdateNotificationModel {
             log::warn!("auto-update toast skipped: no active window at notify time");
             return;
         };
-        let text = warp_i18n::t!(
-            "settings-account-update-toast-available",
-            tag = tag.as_str()
-        )
-        .to_string();
+        let text = warp_i18n::t!("settings-account-update-toast-available").replace("<tag>", &tag);
         let toast = DismissibleToast::<WorkspaceAction>::default(text);
         ToastStack::handle(ctx).update(ctx, |stack, ctx| {
             stack.add_persistent_toast(toast, window_id, ctx);

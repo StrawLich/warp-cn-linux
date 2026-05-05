@@ -33,7 +33,7 @@ static INSTALL_INSTRUCTIONS: LazyLock<PluginInstructions> = LazyLock::new(|| {
     PluginInstructions {
     title: "Enable Warp Notifications for Codex",
     subtitle: "Update Codex to the latest version, then enable in-focus notifications so Warp can display them while you work.",
-    steps: &[
+    steps: vec![
         PluginInstructionStep {
             description: "Update Codex to the latest version.",
             command: "",
@@ -47,15 +47,15 @@ static INSTALL_INSTRUCTIONS: LazyLock<PluginInstructions> = LazyLock::new(|| {
             link: None,
         },
     ],
-    post_install_notes: &["Restart Codex to apply the changes."],
+    post_install_notes: vec!["Restart Codex to apply the changes."],
 }
 });
 
 static EMPTY_INSTRUCTIONS: LazyLock<PluginInstructions> = LazyLock::new(|| PluginInstructions {
     title: "",
     subtitle: "",
-    steps: &[],
-    post_install_notes: &[],
+    steps: vec![],
+    post_install_notes: vec![],
 });
 
 #[cfg(test)]

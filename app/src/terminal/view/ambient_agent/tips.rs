@@ -29,8 +29,8 @@ impl AITip for CloudModeTip {
         self.link.clone()
     }
 
-    fn description(&self) -> &str {
-        &self.text
+    fn description(&self) -> String {
+        self.text.clone()
     }
 
     // Uses the default implementation which adds "Tip: " prefix and parses backticks as inline code

@@ -13,6 +13,20 @@ onboarding-meet-agent-inbox = Meet your new agent inbox
 onboarding-create-tab-config = Create your first tab config
 onboarding-tab-config-desc = Set up a reusable starting point for your tabs. Pick a repo, choose a session type, and optionally attach a worktree. Use it whenever you want to open a tab with this setup.
 onboarding-universal-agent-support = Introducing universal agent support: level up any coding agent with Warp
+onboarding-hoa-feature-vertical-tabs-title = Vertical tabs
+onboarding-hoa-feature-vertical-tabs-desc = Rich tab titles and metadata like git branch, worktree, and PR. Fully customizable.
+onboarding-hoa-feature-tab-configs-title = Tab configs
+onboarding-hoa-feature-tab-configs-desc = Tab-level schema to set your directory, startup commands, theme, and worktree with one click
+onboarding-hoa-feature-agent-inbox-title = Agent inbox
+onboarding-hoa-feature-agent-inbox-desc = Notifications when any agent needs your attention, also accessible in a central inbox
+onboarding-hoa-feature-code-review-title = Native code review
+onboarding-hoa-feature-code-review-desc = Send inline comments from Warp's code review directly to Claude Code, Codex, or OpenCode
+onboarding-hoa-see-whats-new = See what's new
+onboarding-hoa-switch-horizontal-tabs = Switch back to horizontal tabs
+onboarding-hoa-vertical-tabs-title = Try vertical tabs
+onboarding-hoa-vertical-tabs-desc = We moved tabs to the left side so it is easier to scan many sessions at once.
+onboarding-hoa-learn-more = Learn more
+onboarding-hoa-inbox-desc = Stay on top of completed agent tasks and reviews from the agent inbox.
 
 # OpenWarp launch modal
 onboarding-warp-now-open-source = Warp is now open-source
@@ -160,3 +174,30 @@ onboarding-login-skip-dialog-body-ai = Warp is better with AI. By continuing, yo
 onboarding-login-skip-dialog-cancel-drive = Enable Warp Drive
 onboarding-login-skip-dialog-cancel-ai = Enable AI features
 onboarding-login-skip-dialog-confirm = Skip for now
+
+# Onboarding callouts
+onboarding-callout-meet-warp-input-title = Meet the Warp input
+onboarding-callout-meet-warp-input-text = Your terminal input accepts both terminal commands and agent prompts and automatically detects which you're using. Use <keybinding> to lock the input to Agent mode (natural language) or Terminal mode (commands).
+onboarding-callout-talk-agent-title = Talk to the agent
+onboarding-callout-talk-agent-text = You can type in natural language to engage the agent. Submit the query below to start: What tests exist in this repo, how are they structured, and what do they cover?
+onboarding-callout-submit = Submit
+onboarding-callout-finish = Finish
+onboarding-callout-meet-terminal-input-title = Meet your terminal input
+onboarding-callout-meet-updated-terminal-input-title = Meet your updated terminal input
+onboarding-callout-meet-terminal-input-text = Run commands from the terminal, or use <local> or <cloud> to start or send to a local or cloud agent respectively.
+onboarding-callout-nl-overrides-title = Natural language overrides
+onboarding-callout-nl-overrides-text = You can always override any auto-detection using <keybinding>.
+onboarding-callout-nl-support-title = Natural language support
+onboarding-callout-nl-support-text = Natural language input is off by default. If enabled, you can type requests in plain English and Warp will autodetect queries for the agent. You can always override them using <keybinding>.
+onboarding-callout-enable-nl-detection = Enable Natural Language Detection
+onboarding-callout-agent-experience-title = Introducing Warp's new agent experience
+onboarding-callout-agent-experience-text = Agent conversations are now their own scoped view outside of your terminal. Simply hit ESC to return to the terminal at any point.
+onboarding-callout-updated-agent-input-title = Updated agent input
+onboarding-callout-updated-agent-input-with-project-text =
+    Your agent input will detect natural language as well as commands by default. Use ! to lock the input in bash mode to write commands.
+
+    Submit the query below to have the agent initialize this project, or ⊗ to clear the input and start your own!
+onboarding-callout-updated-agent-input-text = Your agent input will detect natural language as well as commands by default. Use ! to lock the input in bash mode to write commands.
+onboarding-callout-skip-initialization = Skip initialization
+onboarding-callout-initialize = Initialize
+onboarding-callout-back-to-terminal = Back to terminal

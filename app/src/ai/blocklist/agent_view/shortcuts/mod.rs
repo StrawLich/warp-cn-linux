@@ -3,8 +3,6 @@ mod model;
 pub use model::*;
 use pathfinder_color::ColorU;
 
-use std::borrow::Cow;
-
 use warp_core::{features::FeatureFlag, ui::appearance::Appearance};
 use warpui::{
     elements::{Border, Container, CrossAxisAlignment, Expanded, Flex, ParentElement, Text},
@@ -35,7 +33,7 @@ pub struct AgentShortcutsViewContext {
 #[derive(Default)]
 pub struct ShortcutProps {
     pub keystroke: Keystroke,
-    pub text: Cow<'static, str>,
+    pub text: String,
     pub text_color: Option<ColorU>,
 }
 
@@ -123,7 +121,7 @@ pub fn render_agent_shortcuts_view(
                     key: "!".to_owned(),
                     ..Default::default()
                 },
-                text: "input shell command".into(),
+                text: warp_i18n::t!("ai-ui-agent-shortcut-shell-command"),
                 ..Default::default()
             },
             app,
@@ -136,7 +134,7 @@ pub fn render_agent_shortcuts_view(
                 key: "/".to_owned(),
                 ..Default::default()
             },
-            text: "for slash commands".into(),
+            text: warp_i18n::t!("ai-ui-agent-shortcut-slash-commands"),
             ..Default::default()
         },
         app,
@@ -148,7 +146,7 @@ pub fn render_agent_shortcuts_view(
                 key: "@".to_owned(),
                 ..Default::default()
             },
-            text: "for file paths and attaching other context".into(),
+            text: warp_i18n::t!("ai-ui-agent-shortcut-context"),
             ..Default::default()
         },
         app,
@@ -161,7 +159,7 @@ pub fn render_agent_shortcuts_view(
             shortcuts.push(render_shortcut(
                 ShortcutProps {
                     keystroke,
-                    text: "open code review".into(),
+                    text: warp_i18n::t!("ai-ui-agent-shortcut-code-review"),
                     ..Default::default()
                 },
                 app,
@@ -176,7 +174,7 @@ pub fn render_agent_shortcuts_view(
             shortcuts.push(render_shortcut(
                 ShortcutProps {
                     keystroke,
-                    text: "toggle conversation list".into(),
+                    text: warp_i18n::t!("ai-ui-agent-shortcut-toggle-conversation-list"),
                     ..Default::default()
                 },
                 app,
@@ -187,7 +185,7 @@ pub fn render_agent_shortcuts_view(
     shortcuts.push(render_shortcut(
         ShortcutProps {
             keystroke: Keystroke::parse(cmd_or_ctrl_shift("y")).expect("is valid keystroke"),
-            text: "search and continue conversations".into(),
+            text: warp_i18n::t!("ai-ui-agent-shortcut-search-conversations"),
             ..Default::default()
         },
         app,
@@ -203,7 +201,7 @@ pub fn render_agent_shortcuts_view(
     shortcuts.push(render_shortcut(
         ShortcutProps {
             keystroke: new_conversation_keystroke.clone(),
-            text: "start a new conversation".into(),
+            text: warp_i18n::t!("ai-ui-agent-shortcut-new-conversation"),
             ..Default::default()
         },
         app,
@@ -216,7 +214,7 @@ pub fn render_agent_shortcuts_view(
             shortcuts.push(render_shortcut(
                 ShortcutProps {
                     keystroke,
-                    text: "toggle auto-accept".into(),
+                    text: warp_i18n::t!("ai-ui-agent-shortcut-toggle-auto-accept"),
                     ..Default::default()
                 },
                 app,
@@ -231,7 +229,7 @@ pub fn render_agent_shortcuts_view(
                 ctrl: true,
                 ..Default::default()
             },
-            text: "pause agent".into(),
+            text: warp_i18n::t!("ai-ui-agent-shortcut-pause-agent"),
             ..Default::default()
         },
         app,
@@ -243,7 +241,7 @@ pub fn render_agent_shortcuts_view(
                 key: "escape".to_owned(),
                 ..Default::default()
             },
-            text: "go back to terminal".into(),
+            text: warp_i18n::t!("ai-ui-agent-shortcut-back-to-terminal"),
             ..Default::default()
         },
         app,

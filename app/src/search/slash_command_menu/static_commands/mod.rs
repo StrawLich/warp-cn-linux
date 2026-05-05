@@ -87,7 +87,7 @@ impl Argument {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct StaticCommand {
     pub name: &'static str,
-    pub description: &'static str,
+    pub description_key: &'static str,
     pub icon_path: &'static str,
     /// Specifies the requirements for this command to be available. See [`Availability`].
     pub availability: Availability,
@@ -98,6 +98,10 @@ pub struct StaticCommand {
 }
 
 impl StaticCommand {
+    pub fn description(&self) -> String {
+        warp_i18n::tr!(self.description_key)
+    }
+
     pub fn matches_filter(&self, filter_text: &str) -> bool {
         if filter_text.is_empty() {
             return true;

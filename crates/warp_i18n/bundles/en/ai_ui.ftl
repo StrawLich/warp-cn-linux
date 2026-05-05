@@ -90,6 +90,61 @@ ai-ui-open-all-code-review = Open all in code review
 ai-ui-dont-show-again = Don't show again
 ai-ui-rewind = Rewind
 ai-ui-rewind-before-block = Rewind to before this block
+ai-ui-learn-more = Learn more
+
+# Agent tips
+ai-ui-tip-prefix = Tip:
+ai-ui-agent-tip-slash-menu = `/` to open the slash-command menu and access quick agent actions.
+ai-ui-agent-tip-toggle-input-mode = <keybinding> to toggle natural language detection and switch between agent and terminal input.
+ai-ui-agent-tip-plan = `/plan` <prompt> to create a plan for the agent before executing.
+ai-ui-agent-tip-command-palette = <keybinding> to open the Command Palette and access Warp actions and shortcuts.
+ai-ui-agent-tip-warp-drive = Store reusable workflows, notebooks, and prompts in your
+ai-ui-agent-tip-redirect-agent = Enter a new prompt to redirect the agent while it's running.
+ai-ui-agent-tip-at-context = `@` to add context from files, blocks, or Warp Drive objects to your prompt.
+ai-ui-agent-tip-prior-output-context = <keybinding> to attach the prior command output as agent context.
+ai-ui-agent-tip-init-index = `/init` to index the repo so the agent can understand your codebase.
+ai-ui-agent-tip-agent-profiles = Add agent profiles to customize permissions and models per session.
+ai-ui-agent-tip-fork-block = Right-click a block to fork the conversation from that point.
+ai-ui-agent-tip-copy-block-output = Right-click a block to copy a conversation's output.
+ai-ui-agent-tip-drag-image = Drag an image into the pane to attach it as agent context.
+ai-ui-agent-tip-interactive-tools = Prompt the agent to control interactive tools like node, python, postgres, gdb, or vim.
+ai-ui-agent-tip-code-review-panel = <keybinding> to open the code review panel and review the agent's changes.
+ai-ui-agent-tip-add-mcp = `/add-mcp` to add an MCP server to your workspace.
+ai-ui-agent-tip-open-mcp-servers = `/open-mcp-servers` to view and share MCP servers with your team.
+ai-ui-agent-tip-create-environment = `/create-environment` to turn a repo into a remote Docker environment an agent can run in.
+ai-ui-agent-tip-add-prompt = `/add-prompt` to create a reusable prompt for repeatable workflows.
+ai-ui-agent-tip-add-rule = `/add-rule` to create a global agent rule.
+ai-ui-agent-tip-fork-command = `/fork` to create a fresh copy of the current conversation, optionally with a new prompt.
+ai-ui-agent-tip-open-code-review = `/open-code-review` to open the code review panel and inspect agent-generated diffs.
+ai-ui-agent-tip-new-conversation = `/new` to start a new agent conversation with clean context.
+ai-ui-agent-tip-compact = `/compact` to summarize the current conversation and free up space in the context window.
+ai-ui-agent-tip-usage = `/usage` to show your current AI credits usage.
+ai-ui-agent-tip-oz-headless = Use the `oz` command to run an Oz agent in headless mode, useful for remote machines.
+ai-ui-agent-tip-selected-text-context = Right-click selected text to attach it as agent context.
+ai-ui-agent-tip-project-rules = Use `AGENTS.md` or `CLAUDE.md` to apply project-scoped rules.
+ai-ui-agent-tip-url-context = Paste a URL to attach that webpage as context for the agent.
+ai-ui-agent-tip-warpify-ssh = Warpify a remote SSH session to enable Oz inside that environment.
+ai-ui-agent-tip-switch-profiles = Switch agent profiles to quickly change models and agent permissions.
+ai-ui-agent-tip-init-rules = `/init` to generate a `WARP.md` file and define project rules for the agent.
+ai-ui-agent-tip-auto-approve-session = <keybinding> to auto-approve the agent's commands and diffs for the rest of the session.
+ai-ui-agent-tip-desktop-notifications = Enable desktop notifications to get an alert when an agent needs your attention.
+ai-ui-agent-tip-cancel-task = <keybinding> to cancel the current agent task.
+ai-ui-agent-tip-voice-input = Hold <keybinding> to speak your prompt directly to the agent.
+ai-ui-agent-tip-action-open-palette = Open palette
+ai-ui-agent-tip-action-warp-drive = Warp Drive.
+ai-ui-agent-tip-action-show-diff-view = Show diff view
+
+# Agent view shortcuts
+ai-ui-agent-shortcut-shell-command = input shell command
+ai-ui-agent-shortcut-slash-commands = for slash commands
+ai-ui-agent-shortcut-context = for file paths and attaching other context
+ai-ui-agent-shortcut-code-review = open code review
+ai-ui-agent-shortcut-toggle-conversation-list = toggle conversation list
+ai-ui-agent-shortcut-search-conversations = search and continue conversations
+ai-ui-agent-shortcut-new-conversation = start a new conversation
+ai-ui-agent-shortcut-toggle-auto-accept = toggle auto-accept
+ai-ui-agent-shortcut-pause-agent = pause agent
+ai-ui-agent-shortcut-back-to-terminal = go back to terminal
 
 # Zero state block
 ai-ui-zero-isolated-cloud = Run your agent task in an isolated cloud environment.

@@ -90,6 +90,61 @@ ai-ui-open-all-code-review = 全部在代码审查中打开
 ai-ui-dont-show-again = 不再显示
 ai-ui-rewind = 回退
 ai-ui-rewind-before-block = 回退到此区块之前
+ai-ui-learn-more = 了解更多
+
+# 智能体提示
+ai-ui-tip-prefix = 提示：
+ai-ui-agent-tip-slash-menu = 使用 `/` 打开斜杠菜单，快速访问智能体动作。
+ai-ui-agent-tip-toggle-input-mode = 使用 <keybinding> 切换自然语言检测，并在智能体输入和终端输入之间切换。
+ai-ui-agent-tip-plan = 使用 `/plan` <prompt> 先让智能体制定计划，再执行任务。
+ai-ui-agent-tip-command-palette = 使用 <keybinding> 打开命令面板，访问 Warp 动作和快捷键。
+ai-ui-agent-tip-warp-drive = 把可复用的工作流、Notebook 和提示词存到你的
+ai-ui-agent-tip-redirect-agent = 智能体运行时，输入新的提示词即可改变它接下来的任务。
+ai-ui-agent-tip-at-context = 使用 `@` 将文件、区块或 Warp Drive 对象作为上下文加入提示词。
+ai-ui-agent-tip-prior-output-context = 使用 <keybinding> 将上一条命令输出作为智能体上下文。
+ai-ui-agent-tip-init-index = 使用 `/init` 索引仓库，让智能体理解你的代码库。
+ai-ui-agent-tip-agent-profiles = 添加智能体配置文件，为每个会话自定义权限和模型。
+ai-ui-agent-tip-fork-block = 右键点击区块，可从该位置 fork 对话。
+ai-ui-agent-tip-copy-block-output = 右键点击区块，可复制对话输出。
+ai-ui-agent-tip-drag-image = 将图片拖入窗格，可作为智能体上下文附加。
+ai-ui-agent-tip-interactive-tools = 可以提示智能体控制 node、python、postgres、gdb 或 vim 等交互式工具。
+ai-ui-agent-tip-code-review-panel = 使用 <keybinding> 打开代码审查面板，审查智能体的更改。
+ai-ui-agent-tip-add-mcp = 使用 `/add-mcp` 将 MCP 服务器添加到工作区。
+ai-ui-agent-tip-open-mcp-servers = 使用 `/open-mcp-servers` 查看 MCP 服务器，并与团队共享。
+ai-ui-agent-tip-create-environment = 使用 `/create-environment` 将仓库变成智能体可运行的远程 Docker 环境。
+ai-ui-agent-tip-add-prompt = 使用 `/add-prompt` 创建可复用提示词，用于重复工作流。
+ai-ui-agent-tip-add-rule = 使用 `/add-rule` 创建全局智能体规则。
+ai-ui-agent-tip-fork-command = 使用 `/fork` 创建当前对话的新副本，也可以附带新的提示词。
+ai-ui-agent-tip-open-code-review = 使用 `/open-code-review` 打开代码审查面板，查看智能体生成的 diff。
+ai-ui-agent-tip-new-conversation = 使用 `/new` 以干净上下文开始新的智能体对话。
+ai-ui-agent-tip-compact = 使用 `/compact` 总结当前对话，释放上下文窗口空间。
+ai-ui-agent-tip-usage = 使用 `/usage` 查看当前 AI 点数用量。
+ai-ui-agent-tip-oz-headless = 使用 `oz` 命令以无界面模式运行 Oz 智能体，适合远程机器。
+ai-ui-agent-tip-selected-text-context = 右键点击选中文本，可将其作为智能体上下文附加。
+ai-ui-agent-tip-project-rules = 使用 `AGENTS.md` 或 `CLAUDE.md` 应用项目范围规则。
+ai-ui-agent-tip-url-context = 粘贴 URL，可将该网页作为智能体上下文附加。
+ai-ui-agent-tip-warpify-ssh = 对远程 SSH 会话执行 Warpify，即可在该环境中启用 Oz。
+ai-ui-agent-tip-switch-profiles = 切换智能体配置文件，可快速更换模型和智能体权限。
+ai-ui-agent-tip-init-rules = 使用 `/init` 生成 `WARP.md` 文件，并定义智能体项目规则。
+ai-ui-agent-tip-auto-approve-session = 使用 <keybinding> 在本次会话剩余时间内自动批准智能体命令和 diff。
+ai-ui-agent-tip-desktop-notifications = 启用桌面通知，当智能体需要你关注时收到提醒。
+ai-ui-agent-tip-cancel-task = 使用 <keybinding> 取消当前智能体任务。
+ai-ui-agent-tip-voice-input = 按住 <keybinding>，直接对智能体说出你的提示词。
+ai-ui-agent-tip-action-open-palette = 打开命令面板
+ai-ui-agent-tip-action-warp-drive = Warp Drive。
+ai-ui-agent-tip-action-show-diff-view = 显示 diff 视图
+
+# 智能体视图快捷键
+ai-ui-agent-shortcut-shell-command = 输入 shell 命令
+ai-ui-agent-shortcut-slash-commands = 打开斜杠菜单
+ai-ui-agent-shortcut-context = 输入文件路径并附加其他上下文
+ai-ui-agent-shortcut-code-review = 打开代码审查
+ai-ui-agent-shortcut-toggle-conversation-list = 切换会话列表
+ai-ui-agent-shortcut-search-conversations = 搜索并继续会话
+ai-ui-agent-shortcut-new-conversation = 开始新会话
+ai-ui-agent-shortcut-toggle-auto-accept = 切换自动接受
+ai-ui-agent-shortcut-pause-agent = 暂停智能体
+ai-ui-agent-shortcut-back-to-terminal = 返回终端
 
 # 零态区块
 ai-ui-zero-isolated-cloud = 在隔离的云环境中运行你的智能体任务。
