@@ -12,10 +12,22 @@ use crate::index::full_source_code_embedding::fragment_metadata::{
 use crate::index::full_source_code_embedding::Error;
 
 use super::{
-    node::{ChildrenPath, MerkleNode, NodeLens, NodeMask},
+    node::{ChildrenPath, MerkleNode, NodeId, NodeLens, NodeMask},
     serialized_tree::SerializedMerkleTree,
     DirEntryOrFragment,
 };
+
+/// Aggregate counts walked from the current Merkle tree, surfaced to the
+/// settings UI alongside sync status.
+#[derive(Debug, Default, Clone, Copy)]
+pub(crate) struct TreeStats {
+    /// Number of `NodeId::File` nodes (one per indexed source file).
+    pub file_count: usize,
+    /// Number of `NodeId::Fragment` leaves (one per embedded chunk).
+    pub fragment_count: usize,
+    /// Sum of source file bytes covered by the index.
+    pub total_file_bytes: u64,
+}
 
 pub(super) enum UpdateFileResult {
     Deleted,
@@ -79,6 +91,28 @@ impl MerkleTree {
 
     pub fn root_node(&self) -> NodeLens<'_> {
         NodeLens::new(&self.root)
+    }
+
+    /// Single-pass walk gathering file count, fragment count, and total
+    /// source bytes. O(n) over all nodes; called once per successful flush.
+    pub(crate) fn stats(&self) -> TreeStats {
+        let mut stats = TreeStats::default();
+        let mut stack = vec![self.root_node()];
+        while let Some(node) = stack.pop() {
+            match node.node_id() {
+                NodeId::File { file_size, .. } => {
+                    stats.file_count += 1;
+                    stats.total_file_bytes =
+                        stats.total_file_bytes.saturating_add(*file_size as u64);
+                }
+                NodeId::Fragment { .. } => {
+                    stats.fragment_count += 1;
+                }
+                NodeId::Directory { .. } => {}
+            }
+            stack.extend(node.children());
+        }
+        stats
     }
 
     pub fn from_serialized_tree(

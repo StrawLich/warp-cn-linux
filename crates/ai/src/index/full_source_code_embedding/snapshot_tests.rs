@@ -76,6 +76,7 @@ fn test_clean_up_snapshot_files() {
             navigated_ts: None,
             modified_ts: None,
             queried_ts: None,
+            ..Default::default()
         }];
 
         // Run cleanup

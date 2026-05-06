@@ -857,6 +857,17 @@ impl CodebaseIndex {
 
             // Clear the earliest unsynced change on successful sync
             self.ts_metadata.earliest_unsynced_change = None;
+
+            // Walk the freshly-synced tree once to surface index stats to settings UI.
+            let stats = tree.stats();
+            ctx.emit(CodebaseIndexEvent::IndexMetadataUpdated {
+                root_path: self.repo_path.clone(),
+                event: WorkspaceMetadataEvent::Flushed {
+                    index_bytes: stats.total_file_bytes,
+                    file_count: stats.file_count.min(u32::MAX as usize) as u32,
+                    fragment_count: stats.fragment_count.min(u32::MAX as usize) as u32,
+                },
+            });
         }
 
         self.update_tree_sync_state(

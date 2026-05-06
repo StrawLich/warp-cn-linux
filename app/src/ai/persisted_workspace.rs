@@ -422,6 +422,7 @@ impl PersistedWorkspace {
                     // Consider creation as a modification event.
                     modified_ts: Some(Utc::now()),
                     queried_ts: None,
+                    ..Default::default()
                 };
 
                 self.save_to_db(vec![ModelEvent::UpsertCodebaseIndexMetadata {
@@ -576,6 +577,7 @@ impl PersistedWorkspace {
                                     navigated_ts: None,
                                     modified_ts: None,
                                     queried_ts: None,
+                                    ..Default::default()
                                 },
                                 language_servers: HashMap::new(),
                             });
@@ -698,6 +700,7 @@ impl PersistedWorkspace {
                             navigated_ts: Some(now),
                             modified_ts: None,
                             queried_ts: None,
+                            ..Default::default()
                         },
                         language_servers: HashMap::new(),
                     },
@@ -732,6 +735,8 @@ impl PersistedWorkspace {
             WorkspaceMetadataEvent::Queried => {
                 if let Some(workspace) = self.workspaces.get_mut(root_path) {
                     workspace.metadata.queried_ts = Some(Utc::now());
+                    workspace.metadata.query_count =
+                        workspace.metadata.query_count.saturating_add(1);
                 }
                 self.persist_metadata_for_index(root_path);
             }
@@ -748,6 +753,7 @@ impl PersistedWorkspace {
                     // Count creation as a modification event.
                     modified_ts: Some(Utc::now()),
                     queried_ts: None,
+                    ..Default::default()
                 };
 
                 if let Some(existing) = self.workspaces.get_mut(root_path) {
@@ -763,6 +769,19 @@ impl PersistedWorkspace {
                             language_servers: HashMap::new(),
                         },
                     );
+                }
+                self.persist_metadata_for_index(root_path);
+            }
+            WorkspaceMetadataEvent::Flushed {
+                index_bytes,
+                file_count,
+                fragment_count,
+            } => {
+                if let Some(workspace) = self.workspaces.get_mut(root_path) {
+                    workspace.metadata.synced_at = Some(Utc::now());
+                    workspace.metadata.index_bytes = Some(index_bytes);
+                    workspace.metadata.file_count = Some(file_count);
+                    workspace.metadata.fragment_count = Some(fragment_count);
                 }
                 self.persist_metadata_for_index(root_path);
             }
