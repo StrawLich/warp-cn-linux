@@ -1137,6 +1137,18 @@ impl ServerApi {
         request: &warp_multi_agent_api::Request,
     ) -> std::result::Result<AIOutputStream<warp_multi_agent_api::ResponseEvent>, Arc<AIApiError>>
     {
+        // warp-cn fork (M4.2.1): Direct mode short-circuit. Drives a
+        // ReadFile-only Anthropic agent when `WARP_CN_DIRECT_PROVIDER=anthropic`
+        // + `WARP_CN_API_KEY=...` are set; otherwise emits a `[Init,
+        // Finished{InternalError}]` stream so Agent Mode shows a readable
+        // message instead of crashing on a 401 from `app.warp.dev/ai/multi-agent`.
+        // OpenAI/Gemini tool calling and additional tools (Bash/Grep/...) come
+        // in M4.2.2+; see `app/src/server/direct_backend/multi_agent/`.
+        #[cfg(feature = "direct_llm_backend")]
+        if warp_core::features::FeatureFlag::DirectLlmBackend.is_enabled() {
+            return Ok(crate::server::direct_backend::multi_agent::run(request));
+        }
+
         let auth_token = self
             .get_or_refresh_access_token()
             .await

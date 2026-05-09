@@ -1314,6 +1314,12 @@ pub(crate) fn initialize_app(
         manager
     });
 
+    // warp-cn fork: per-provider base_url + custom model_id overrides for the
+    // Direct LLM backend. Registered alongside ApiKeyManager so settings UI
+    // can read both via `as_ref(ctx)` without ordering ceremony.
+    #[cfg(feature = "direct_llm_backend")]
+    ctx.add_singleton_model(::ai::direct_backend::DirectBackendConfig::new);
+
     ctx.add_singleton_model(AntivirusInfo::new);
 
     cfg_if::cfg_if! {

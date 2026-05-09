@@ -1524,6 +1524,8 @@ impl AISettingsPageView {
                 }
                 widgets.push(Box::new(CLIAgentWidget::default()));
                 widgets.push(Box::new(ApiKeysWidget::new(ctx)));
+                #[cfg(feature = "direct_llm_backend")]
+                widgets.push(Box::new(DirectProviderWidget::new(ctx)));
                 widgets.push(Box::new(AwsBedrockWidget::new(ctx)));
                 widgets.push(Box::new(AgentAttributionWidget::default()));
                 widgets.push(Box::new(OtherAIWidget::default()));
@@ -1564,6 +1566,8 @@ impl AISettingsPageView {
                     widgets.push(Box::new(VoiceWidget::default()));
                 }
                 widgets.push(Box::new(ApiKeysWidget::new(ctx)));
+                #[cfg(feature = "direct_llm_backend")]
+                widgets.push(Box::new(DirectProviderWidget::new(ctx)));
                 widgets.push(Box::new(AwsBedrockWidget::new(ctx)));
                 widgets.push(Box::new(AgentAttributionWidget::default()));
                 widgets.push(Box::new(OtherAIWidget::default()));
@@ -2236,6 +2240,12 @@ pub enum AISettingsPageAction {
     ToggleUseAgentToolbar,
     ToggleVoiceInput,
     ToggleCanUseWarpCreditsWithByok,
+    /// warp-cn fork: toggle the master Direct LLM backend switch.
+    #[cfg(feature = "direct_llm_backend")]
+    ToggleDirectLlmBackend,
+    /// warp-cn fork: select which provider Direct mode routes to.
+    #[cfg(feature = "direct_llm_backend")]
+    SelectDirectProvider(ai::direct_backend::DirectProviderKind),
     HyperlinkClick(HyperlinkUrl),
     ToggleCodebaseContext,
     ToggleShowInputHintText,
@@ -2634,6 +2644,28 @@ impl TypedActionView for AISettingsPageView {
                         .can_use_warp_credits_with_byok
                         .toggle_and_save_value(ctx));
                 });
+                ctx.notify();
+            }
+            #[cfg(feature = "direct_llm_backend")]
+            AISettingsPageAction::ToggleDirectLlmBackend => {
+                ai::direct_backend::DirectBackendConfig::handle(ctx).update(
+                    ctx,
+                    |cfg, inner| {
+                        let next = !cfg.is_enabled();
+                        cfg.set_enabled(next, inner);
+                    },
+                );
+                ctx.notify();
+            }
+            #[cfg(feature = "direct_llm_backend")]
+            AISettingsPageAction::SelectDirectProvider(kind) => {
+                let kind = *kind;
+                ai::direct_backend::DirectBackendConfig::handle(ctx).update(
+                    ctx,
+                    move |cfg, inner| {
+                        cfg.set_active(kind, inner);
+                    },
+                );
                 ctx.notify();
             }
             AISettingsPageAction::HyperlinkClick(hyperlink) => {
@@ -7132,5 +7164,318 @@ mod styles {
         } else {
             appearance.theme().disabled_ui_text_color()
         }
+    }
+}
+
+// ── warp-cn fork: Direct LLM backend settings UI ───────────────────────────
+// Master toggle + per-provider {base_url, model_id} editors + active selector.
+// Persists to `ai::direct_backend::DirectBackendConfig` (separate secure
+// storage entry from `ApiKeyManager`) so the upstream BYOK schema is unchanged.
+
+#[cfg(feature = "direct_llm_backend")]
+struct ProviderInputSet {
+    kind: ::ai::direct_backend::DirectProviderKind,
+    label: &'static str,
+    base_url_editor: ViewHandle<EditorView>,
+    model_editor: ViewHandle<EditorView>,
+    active_button: ViewHandle<ActionButton>,
+}
+
+#[cfg(feature = "direct_llm_backend")]
+impl ProviderInputSet {
+    fn new(
+        kind: ::ai::direct_backend::DirectProviderKind,
+        label: &'static str,
+        base_url_placeholder: &'static str,
+        model_placeholder: &'static str,
+        ctx: &mut ViewContext<AISettingsPageView>,
+    ) -> Self {
+        let (base_url_initial, model_initial) = {
+            let cfg = ::ai::direct_backend::DirectBackendConfig::as_ref(ctx);
+            let o = cfg.overrides_for(kind).clone();
+            (o.base_url, o.model_id)
+        };
+
+        let base_url_editor = make_direct_editor(
+            base_url_initial,
+            base_url_placeholder,
+            kind,
+            DirectField::BaseUrl,
+            ctx,
+        );
+        let model_editor = make_direct_editor(
+            model_initial,
+            model_placeholder,
+            kind,
+            DirectField::Model,
+            ctx,
+        );
+
+        let active_button = ctx.add_typed_action_view(move |_| {
+            ActionButton::new("Set Active", SecondaryTheme)
+                .with_size(ButtonSize::Small)
+                .on_click(move |ctx| {
+                    ctx.dispatch_typed_action(AISettingsPageAction::SelectDirectProvider(kind));
+                })
+        });
+
+        Self {
+            kind,
+            label,
+            base_url_editor,
+            model_editor,
+            active_button,
+        }
+    }
+}
+
+#[cfg(feature = "direct_llm_backend")]
+#[derive(Copy, Clone)]
+enum DirectField {
+    BaseUrl,
+    Model,
+}
+
+#[cfg(feature = "direct_llm_backend")]
+fn make_direct_editor(
+    initial: String,
+    placeholder: &'static str,
+    kind: ::ai::direct_backend::DirectProviderKind,
+    field: DirectField,
+    ctx: &mut ViewContext<AISettingsPageView>,
+) -> ViewHandle<EditorView> {
+    let editor = ctx.add_typed_action_view(move |ctx| {
+        let appearance = Appearance::as_ref(ctx);
+        let options = SingleLineEditorOptions {
+            is_password: false,
+            text: TextOptions {
+                font_size_override: Some(appearance.ui_font_size()),
+                font_family_override: Some(appearance.monospace_font_family()),
+                text_colors_override: Some(TextColors {
+                    default_color: appearance.theme().active_ui_text_color(),
+                    disabled_color: appearance.theme().disabled_ui_text_color(),
+                    hint_color: appearance.theme().disabled_ui_text_color(),
+                }),
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+        let mut editor = EditorView::single_line(options, ctx);
+        editor.set_placeholder_text(placeholder, ctx);
+        if !initial.is_empty() {
+            editor.set_buffer_text(&initial, ctx);
+        }
+        editor
+    });
+
+    ctx.subscribe_to_view(&editor, move |_, ed, event, ctx| {
+        if matches!(event, EditorEvent::Blurred | EditorEvent::Enter) {
+            let buffer_text = ed.as_ref(ctx).buffer_text(ctx);
+            ::ai::direct_backend::DirectBackendConfig::handle(ctx).update(ctx, |cfg, inner| {
+                let mut overrides = cfg.overrides_for(kind).clone();
+                match field {
+                    DirectField::BaseUrl => overrides.base_url = buffer_text,
+                    DirectField::Model => overrides.model_id = buffer_text,
+                }
+                cfg.set_overrides(kind, overrides, inner);
+            });
+        }
+    });
+
+    editor
+}
+
+#[cfg(feature = "direct_llm_backend")]
+struct DirectProviderWidget {
+    enabled_toggle: SwitchStateHandle,
+    providers: [ProviderInputSet; 4],
+}
+
+#[cfg(feature = "direct_llm_backend")]
+impl DirectProviderWidget {
+    fn new(ctx: &mut ViewContext<AISettingsPageView>) -> Self {
+        use ::ai::direct_backend::DirectProviderKind as Kind;
+        Self {
+            enabled_toggle: SwitchStateHandle::default(),
+            providers: [
+                ProviderInputSet::new(
+                    Kind::OpenAi,
+                    "OpenAI",
+                    "https://api.openai.com",
+                    "gpt-4o-mini",
+                    ctx,
+                ),
+                ProviderInputSet::new(
+                    Kind::Anthropic,
+                    "Anthropic",
+                    "https://api.anthropic.com",
+                    "claude-sonnet-4-6",
+                    ctx,
+                ),
+                ProviderInputSet::new(
+                    Kind::Gemini,
+                    "Gemini",
+                    "https://generativelanguage.googleapis.com",
+                    "gemini-2.5-flash",
+                    ctx,
+                ),
+                ProviderInputSet::new(
+                    Kind::OpenAiCompatible,
+                    "OpenAI-compatible (DeepSeek / Qwen / Ollama / vLLM …)",
+                    "https://api.deepseek.com",
+                    "deepseek-chat",
+                    ctx,
+                ),
+            ],
+        }
+    }
+
+    fn render_provider_section(
+        &self,
+        provider: &ProviderInputSet,
+        active_kind: ::ai::direct_backend::DirectProviderKind,
+        is_enabled: bool,
+        appearance: &Appearance,
+        app: &AppContext,
+    ) -> Box<dyn Element> {
+        let is_active = provider.kind == active_kind;
+        let header_label = if is_active {
+            format!("{} (active)", provider.label)
+        } else {
+            provider.label.to_string()
+        };
+        let header = Text::new_inline(
+            header_label,
+            appearance.ui_font_family(),
+            CONTENT_FONT_SIZE,
+        )
+        .with_color(styles::header_font_color(is_enabled, app).into())
+        .finish();
+
+        let editor_style = UiComponentStyles {
+            padding: Some(Coords {
+                top: 10.,
+                bottom: 10.,
+                left: 16.,
+                right: 16.,
+            }),
+            background: Some(appearance.theme().surface_2().into()),
+            ..Default::default()
+        };
+        let base_url_input = appearance
+            .ui_builder()
+            .text_input(provider.base_url_editor.clone())
+            .with_style(editor_style.clone())
+            .build()
+            .finish();
+        let model_input = appearance
+            .ui_builder()
+            .text_input(provider.model_editor.clone())
+            .with_style(editor_style)
+            .build()
+            .finish();
+
+        let active_btn = ChildView::new(&provider.active_button).finish();
+
+        let header_row = Flex::row()
+            .with_main_axis_alignment(MainAxisAlignment::SpaceBetween)
+            .with_child(header)
+            .with_child(active_btn)
+            .finish();
+
+        Flex::column()
+            .with_spacing(6.)
+            .with_child(header_row)
+            .with_child(label_text("Base URL", is_enabled, appearance, app))
+            .with_child(base_url_input)
+            .with_child(label_text("Model ID", is_enabled, appearance, app))
+            .with_child(model_input)
+            .finish()
+    }
+}
+
+#[cfg(feature = "direct_llm_backend")]
+fn label_text(
+    text: &'static str,
+    is_enabled: bool,
+    appearance: &Appearance,
+    app: &AppContext,
+) -> Box<dyn Element> {
+    Text::new_inline(text, appearance.ui_font_family(), CONTENT_FONT_SIZE)
+        .with_color(styles::header_font_color(is_enabled, app).into())
+        .finish()
+}
+
+#[cfg(feature = "direct_llm_backend")]
+impl SettingsWidget for DirectProviderWidget {
+    type View = AISettingsPageView;
+
+    fn search_terms(&self) -> &str {
+        "direct llm provider warp-cn openai anthropic gemini deepseek qwen ollama base url model"
+    }
+
+    fn render(
+        &self,
+        _view: &Self::View,
+        appearance: &Appearance,
+        app: &AppContext,
+    ) -> Box<dyn Element> {
+        let cfg = ::ai::direct_backend::DirectBackendConfig::as_ref(app);
+        let is_enabled = cfg.is_enabled();
+        let active_kind = cfg.active_provider();
+
+        let toggle = render_ai_feature_switch(
+            self.enabled_toggle.clone(),
+            is_enabled,
+            true,
+            AISettingsPageAction::ToggleDirectLlmBackend,
+            app,
+        );
+
+        let header = build_sub_header(
+            appearance,
+            "Direct LLM Backend (warp-cn)",
+            Some(styles::header_font_color(true, app)),
+        )
+        .with_padding_bottom(HEADER_PADDING)
+        .finish();
+
+        let description = render_ai_setting_description(
+            "Bypass Warp cloud and route AI traffic to your own provider \
+             (OpenAI / Anthropic / Gemini / any OpenAI-compatible gateway). \
+             API keys come from the BYOK section above; configure base URL and \
+             model id per provider here.",
+            true,
+            app,
+        );
+
+        let toggle_row = Flex::row()
+            .with_main_axis_alignment(MainAxisAlignment::SpaceBetween)
+            .with_child(label_text("Enable Direct Mode", true, appearance, app))
+            .with_child(toggle)
+            .finish();
+
+        let mut column = Flex::column()
+            .with_spacing(12.)
+            .with_child(render_separator(appearance))
+            .with_child(header)
+            .with_child(description)
+            .with_child(toggle_row);
+
+        if is_enabled {
+            for provider in &self.providers {
+                column.add_child(self.render_provider_section(
+                    provider,
+                    active_kind,
+                    is_enabled,
+                    appearance,
+                    app,
+                ));
+            }
+        }
+
+        Container::new(column.finish())
+            .with_margin_bottom(HEADER_PADDING)
+            .finish()
     }
 }
