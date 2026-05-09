@@ -7168,14 +7168,16 @@ mod styles {
 }
 
 // ── warp-cn fork: Direct LLM backend settings UI ───────────────────────────
-// Master toggle + per-provider {base_url, model_id} editors + active selector.
-// Persists to `ai::direct_backend::DirectBackendConfig` (separate secure
-// storage entry from `ApiKeyManager`) so the upstream BYOK schema is unchanged.
+// Master toggle + per-provider {api_key, base_url, model_id} editors + active
+// selector. Persists to `ai::direct_backend::DirectBackendConfig` (separate
+// encrypted secure-storage entry from `ApiKeyManager`) so warp-cn fork users
+// can fill provider creds in one place without touching the upstream BYOK store.
 
 #[cfg(feature = "direct_llm_backend")]
 struct ProviderInputSet {
     kind: ::ai::direct_backend::DirectProviderKind,
     label: &'static str,
+    api_key_editor: ViewHandle<EditorView>,
     base_url_editor: ViewHandle<EditorView>,
     model_editor: ViewHandle<EditorView>,
     active_button: ViewHandle<ActionButton>,
@@ -7188,14 +7190,22 @@ impl ProviderInputSet {
         label: &'static str,
         base_url_placeholder: &'static str,
         model_placeholder: &'static str,
+        api_key_placeholder: &'static str,
         ctx: &mut ViewContext<AISettingsPageView>,
     ) -> Self {
-        let (base_url_initial, model_initial) = {
+        let (api_key_initial, base_url_initial, model_initial) = {
             let cfg = ::ai::direct_backend::DirectBackendConfig::as_ref(ctx);
             let o = cfg.overrides_for(kind).clone();
-            (o.base_url, o.model_id)
+            (o.api_key, o.base_url, o.model_id)
         };
 
+        let api_key_editor = make_direct_editor(
+            api_key_initial,
+            api_key_placeholder,
+            kind,
+            DirectField::ApiKey,
+            ctx,
+        );
         let base_url_editor = make_direct_editor(
             base_url_initial,
             base_url_placeholder,
@@ -7222,6 +7232,7 @@ impl ProviderInputSet {
         Self {
             kind,
             label,
+            api_key_editor,
             base_url_editor,
             model_editor,
             active_button,
@@ -7232,6 +7243,7 @@ impl ProviderInputSet {
 #[cfg(feature = "direct_llm_backend")]
 #[derive(Copy, Clone)]
 enum DirectField {
+    ApiKey,
     BaseUrl,
     Model,
 }
@@ -7244,10 +7256,11 @@ fn make_direct_editor(
     field: DirectField,
     ctx: &mut ViewContext<AISettingsPageView>,
 ) -> ViewHandle<EditorView> {
+    let is_secret = matches!(field, DirectField::ApiKey);
     let editor = ctx.add_typed_action_view(move |ctx| {
         let appearance = Appearance::as_ref(ctx);
         let options = SingleLineEditorOptions {
-            is_password: false,
+            is_password: is_secret,
             text: TextOptions {
                 font_size_override: Some(appearance.ui_font_size()),
                 font_family_override: Some(appearance.monospace_font_family()),
@@ -7274,6 +7287,7 @@ fn make_direct_editor(
             ::ai::direct_backend::DirectBackendConfig::handle(ctx).update(ctx, |cfg, inner| {
                 let mut overrides = cfg.overrides_for(kind).clone();
                 match field {
+                    DirectField::ApiKey => overrides.api_key = buffer_text,
                     DirectField::BaseUrl => overrides.base_url = buffer_text,
                     DirectField::Model => overrides.model_id = buffer_text,
                 }
@@ -7303,6 +7317,7 @@ impl DirectProviderWidget {
                     "OpenAI",
                     "https://api.openai.com",
                     "gpt-4o-mini",
+                    "sk-...",
                     ctx,
                 ),
                 ProviderInputSet::new(
@@ -7310,6 +7325,7 @@ impl DirectProviderWidget {
                     "Anthropic",
                     "https://api.anthropic.com",
                     "claude-sonnet-4-6",
+                    "sk-ant-...",
                     ctx,
                 ),
                 ProviderInputSet::new(
@@ -7317,6 +7333,7 @@ impl DirectProviderWidget {
                     "Gemini",
                     "https://generativelanguage.googleapis.com",
                     "gemini-2.5-flash",
+                    "AIzaSy...",
                     ctx,
                 ),
                 ProviderInputSet::new(
@@ -7324,6 +7341,7 @@ impl DirectProviderWidget {
                     "OpenAI-compatible (DeepSeek / Qwen / Ollama / vLLM …)",
                     "https://api.deepseek.com",
                     "deepseek-chat",
+                    "sk-... (provider-specific)",
                     ctx,
                 ),
             ],
@@ -7362,6 +7380,12 @@ impl DirectProviderWidget {
             background: Some(appearance.theme().surface_2().into()),
             ..Default::default()
         };
+        let api_key_input = appearance
+            .ui_builder()
+            .text_input(provider.api_key_editor.clone())
+            .with_style(editor_style.clone())
+            .build()
+            .finish();
         let base_url_input = appearance
             .ui_builder()
             .text_input(provider.base_url_editor.clone())
@@ -7386,6 +7410,8 @@ impl DirectProviderWidget {
         Flex::column()
             .with_spacing(6.)
             .with_child(header_row)
+            .with_child(label_text("API Key", is_enabled, appearance, app))
+            .with_child(api_key_input)
             .with_child(label_text("Base URL", is_enabled, appearance, app))
             .with_child(base_url_input)
             .with_child(label_text("Model ID", is_enabled, appearance, app))
@@ -7443,8 +7469,9 @@ impl SettingsWidget for DirectProviderWidget {
         let description = render_ai_setting_description(
             "Bypass Warp cloud and route AI traffic to your own provider \
              (OpenAI / Anthropic / Gemini / any OpenAI-compatible gateway). \
-             API keys come from the BYOK section above; configure base URL and \
-             model id per provider here.",
+             Fill API key + base URL + model id per provider below — keys are \
+             stored locally in encrypted secure storage and take precedence \
+             over the upstream BYOK section.",
             true,
             app,
         );

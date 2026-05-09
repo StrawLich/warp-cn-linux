@@ -528,6 +528,53 @@ pub(super) fn sanitize_error(e: &anyhow::Error) -> String {
 }
 
 fn resolve_provider() -> Option<ResolvedProvider> {
+    // Priority 1: in-process snapshot of `DirectBackendConfig` (UI-driven).
+    // The snapshot is published whenever the model persists, so changes
+    // through the settings page take effect for the next agent turn without
+    // requiring a restart or env-var hack.
+    if let Some(p) = resolve_from_snapshot() {
+        return Some(p);
+    }
+    // Priority 2: env-vars. Original M2-era escape hatch for headless
+    // dev/QA flows that pre-date the settings UI.
+    resolve_from_env()
+}
+
+fn resolve_from_snapshot() -> Option<ResolvedProvider> {
+    let snap = ::ai::direct_backend::current_snapshot();
+    if !snap.enabled {
+        return None;
+    }
+    let kind = snap.active;
+    let overrides = match kind {
+        DirectProviderKind::OpenAi => &snap.openai,
+        DirectProviderKind::Anthropic => &snap.anthropic,
+        DirectProviderKind::Gemini => &snap.gemini,
+        DirectProviderKind::OpenAiCompatible => &snap.openai_compatible,
+    };
+    let api_key = overrides.api_key.trim();
+    if api_key.is_empty() {
+        return None;
+    }
+    let base_url = if overrides.base_url.trim().is_empty() {
+        default_base_url(kind).to_string()
+    } else {
+        overrides.base_url.trim().trim_end_matches('/').to_string()
+    };
+    let model_id = if overrides.model_id.trim().is_empty() {
+        default_model_id(kind).to_string()
+    } else {
+        overrides.model_id.trim().to_string()
+    };
+    Some(ResolvedProvider {
+        kind,
+        api_key: api_key.to_string(),
+        base_url,
+        model_id,
+    })
+}
+
+fn resolve_from_env() -> Option<ResolvedProvider> {
     let kind = match std::env::var("WARP_CN_DIRECT_PROVIDER")
         .ok()?
         .to_ascii_lowercase()

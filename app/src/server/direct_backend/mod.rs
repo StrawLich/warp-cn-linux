@@ -149,16 +149,8 @@ fn default_model_id(kind: DirectProviderKind) -> &'static str {
 fn resolve(config: &DirectBackendConfig, api_keys: &ApiKeyManager) -> Option<ResolvedProvider> {
     let kind = config.active_provider();
     let overrides = config.overrides_for(kind);
-    let key_owner = api_keys.keys();
 
-    let api_key = match kind {
-        DirectProviderKind::OpenAi | DirectProviderKind::OpenAiCompatible => {
-            key_owner.openai.clone().filter(|s| !s.is_empty())?
-        }
-        DirectProviderKind::Anthropic => key_owner.anthropic.clone().filter(|s| !s.is_empty())?,
-        DirectProviderKind::Gemini => key_owner.google.clone().filter(|s| !s.is_empty())?,
-    };
-
+    let api_key = pick_api_key(kind, overrides, api_keys)?;
     let base_url = pick_base_url(kind, overrides);
     let model_id = pick_model_id(kind, overrides);
 
@@ -168,6 +160,32 @@ fn resolve(config: &DirectBackendConfig, api_keys: &ApiKeyManager) -> Option<Res
         base_url,
         model_id,
     })
+}
+
+/// Picks the API key. Priority: per-provider override (filled via Direct LLM
+/// settings UI) → upstream `ApiKeyManager` (BYOK store, unlocked by our fork
+/// patch). Returns `None` only if neither has a non-empty value.
+///
+/// `OpenAiCompatible` deliberately does NOT fall back to the OpenAI-slot key
+/// in `ApiKeyManager`: the same physical key can't realistically be both an
+/// OpenAI key and a DeepSeek/Qwen key. Compatible-gateway users must configure
+/// the key directly in the override.
+fn pick_api_key(
+    kind: DirectProviderKind,
+    overrides: &ProviderOverrides,
+    api_keys: &ApiKeyManager,
+) -> Option<String> {
+    let trimmed_override = overrides.api_key.trim();
+    if !trimmed_override.is_empty() {
+        return Some(trimmed_override.to_owned());
+    }
+    let key_owner = api_keys.keys();
+    match kind {
+        DirectProviderKind::OpenAi => key_owner.openai.clone().filter(|s| !s.is_empty()),
+        DirectProviderKind::Anthropic => key_owner.anthropic.clone().filter(|s| !s.is_empty()),
+        DirectProviderKind::Gemini => key_owner.google.clone().filter(|s| !s.is_empty()),
+        DirectProviderKind::OpenAiCompatible => None,
+    }
 }
 
 fn pick_base_url(kind: DirectProviderKind, overrides: &ProviderOverrides) -> String {

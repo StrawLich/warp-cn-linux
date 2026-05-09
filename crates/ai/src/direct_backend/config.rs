@@ -4,11 +4,40 @@
 //! (which only stores the secret key) so the secure-storage payload of API
 //! keys is unchanged from upstream.
 
+use std::sync::{OnceLock, RwLock};
+
 use serde::{Deserialize, Serialize};
 use warpui::{Entity, ModelContext, SingletonEntity};
 use warpui_extras::secure_storage::{self, AppContextExt};
 
 const SECURE_STORAGE_KEY: &str = "DirectBackendConfig";
+
+/// Process-global snapshot of the latest persisted state. Mirrors the model so
+/// callers without an `AppContext` (the multi-agent SSE driver, which is invoked
+/// from a stream-poll closure inside `ServerApi`) can resolve the active
+/// provider without plumbing `AppContext` through every async boundary.
+static RUNTIME_SNAPSHOT: OnceLock<RwLock<DirectBackendState>> = OnceLock::new();
+
+fn snapshot_lock() -> &'static RwLock<DirectBackendState> {
+    RUNTIME_SNAPSHOT.get_or_init(|| RwLock::new(DirectBackendState::default()))
+}
+
+/// Atomically replace the global snapshot. Called from `DirectBackendConfig`
+/// after every `set_*` mutation and once at startup.
+pub fn publish_snapshot(state: DirectBackendState) {
+    if let Ok(mut guard) = snapshot_lock().write() {
+        *guard = state;
+    }
+}
+
+/// Read the global snapshot. Returns the default state until the first
+/// `publish_snapshot` call lands (which happens during `DirectBackendConfig::new`).
+pub fn current_snapshot() -> DirectBackendState {
+    snapshot_lock()
+        .read()
+        .map(|g| g.clone())
+        .unwrap_or_default()
+}
 
 /// Supported provider protocols. Names match the upstream `LLMProvider`
 /// variants where possible so future merges of provider-specific UI hooks stay
@@ -25,12 +54,19 @@ pub enum DirectProviderKind {
     OpenAiCompatible,
 }
 
-/// Per-provider override of base URL and the model id sent on the wire.
+/// Per-provider configuration: API key + base URL override + model id override.
 ///
-/// Empty `base_url` means "use the provider default"; empty `model_id` means
-/// "fall back to whatever the request layer already chose".
+/// Empty fields fall back: `api_key` empty → fall back to `ApiKeyManager` (the
+/// upstream BYOK store); empty `base_url`/`model_id` → fall back to the
+/// per-provider default constants in `app/src/server/direct_backend/mod.rs`.
+///
+/// Persisted via `DirectBackendConfig`'s encrypted secure storage entry —
+/// independent of `ApiKeyManager` so warp-cn users can keep their fork keys
+/// separate from any upstream cloud-agent keys.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ProviderOverrides {
+    #[serde(default)]
+    pub api_key: String,
     #[serde(default)]
     pub base_url: String,
     #[serde(default)]
@@ -67,9 +103,9 @@ pub struct DirectBackendConfig {
 
 impl DirectBackendConfig {
     pub fn new(ctx: &mut ModelContext<Self>) -> Self {
-        Self {
-            state: load_from_secure_storage(ctx),
-        }
+        let state = load_from_secure_storage(ctx);
+        publish_snapshot(state.clone());
+        Self { state }
     }
 
     pub fn state(&self) -> &DirectBackendState {
@@ -142,6 +178,7 @@ impl DirectBackendConfig {
         {
             log::error!("Failed to persist DirectBackendConfig: {e:#}");
         }
+        publish_snapshot(self.state.clone());
         ctx.emit(DirectBackendConfigEvent::Updated);
     }
 }
