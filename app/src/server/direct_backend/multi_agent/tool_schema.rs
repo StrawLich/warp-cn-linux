@@ -426,24 +426,53 @@ fn format_one_file(path: &str, content: &str, line_range: Option<&api::FileConte
 const RUN_SHELL_DESC: &str =
     "Run a shell command on the user's machine and return its output. \
      Use this when the user asks to inspect system state (ls, grep, cargo …), \
-     run tests, build, or otherwise execute commands. The command is presented \
-     to the user for approval before running. Mark `is_read_only: true` only \
-     for commands that obviously cannot mutate state (e.g. `pwd`, `ls`, \
-     `cat …`).";
+     run tests, build, or otherwise execute commands. \
+     \
+     YOU MUST set `risk_category` for EVERY call. The client auto-runs \
+     `read_only` commands without prompting and asks the user for everything \
+     else — omitting or under-classifying turns every safe inspection into \
+     a permission popup, which the user will reject. \
+     \
+     Use `read_only` for ANY command that only reads (pwd, ls, cat, head, \
+     tail, less, file, stat, wc, find, grep, awk, sed-without-`-i`, sort, \
+     uniq, tree, cargo metadata, cargo tree, rustup show, git status, git \
+     log, git diff, git show, git blame, git remote -v, gh pr view, curl \
+     GET without -d/-X POST, and any pipeline composed solely of these). \
+     Default to `read_only` whenever in doubt about an inspection command. \
+     \
+     Use `trivial_local_change` for safe local mutations (mkdir, touch, mv \
+     inside cwd, chmod). \
+     Use `nontrivial_local_change` for build/install (cargo build, npm \
+     install, pip install, editing source files). \
+     Use `external_change` for anything affecting other systems (git push, \
+     curl POST/PUT/DELETE, ssh remote, gh pr create, deploy scripts). \
+     Use `risky` for irreversible / privileged actions (rm -rf, sudo, dd, \
+     mkfs, kill -9 critical pids).";
 
 const RUN_SHELL_SCHEMA: &str = r#"{
   "type": "object",
   "properties": {
     "command": {"type": "string", "description": "The full command line to execute."},
-    "is_read_only": {"type": "boolean", "description": "True if the command does not mutate state."}
+    "risk_category": {
+      "type": "string",
+      "enum": ["read_only", "trivial_local_change", "nontrivial_local_change", "external_change", "risky"],
+      "description": "Pick the most accurate category so the client can decide whether to auto-run or ask."
+    }
   },
-  "required": ["command"],
+  "required": ["command", "risk_category"],
   "additionalProperties": false
 }"#;
 
 #[derive(Deserialize)]
 struct RunShellInput {
     command: String,
+    /// New canonical field. Required by the schema, but accept absence
+    /// gracefully so older models that learned the previous schema don't
+    /// hard-fail; default to `read_only` to match the historical default
+    /// behavior of `is_read_only: false → ask user`.
+    #[serde(default)]
+    risk_category: Option<String>,
+    /// Legacy field kept for back-compat. Ignored when `risk_category` is set.
     #[serde(default)]
     is_read_only: bool,
 }
@@ -455,18 +484,40 @@ fn parse_run_shell_command(value: Value) -> anyhow::Result<api::message::tool_ca
     if cmd.is_empty() {
         return Err(anyhow!("run_shell_command requires a non-empty command"));
     }
+    let risk = match parsed.risk_category.as_deref() {
+        Some("read_only") => api::RiskCategory::ReadOnly,
+        Some("trivial_local_change") => api::RiskCategory::TrivialLocalChange,
+        Some("nontrivial_local_change") => api::RiskCategory::NontrivialLocalChange,
+        Some("external_change") => api::RiskCategory::ExternalChange,
+        Some("risky") => api::RiskCategory::Risky,
+        // Fall back to the legacy bool only when the new field is missing.
+        None if parsed.is_read_only => api::RiskCategory::ReadOnly,
+        None => api::RiskCategory::Unspecified,
+        Some(other) => {
+            return Err(anyhow!("unknown risk_category `{other}`"));
+        }
+    };
     Ok(api::message::tool_call::RunShellCommand {
         command: cmd,
         #[allow(deprecated)]
-        is_read_only: parsed.is_read_only,
+        is_read_only: matches!(risk, api::RiskCategory::ReadOnly),
+        risk_category: risk as i32,
         ..Default::default()
     })
 }
 
 fn run_shell_to_json(r: &api::message::tool_call::RunShellCommand) -> Value {
-    #[allow(deprecated)]
-    let is_ro = r.is_read_only;
-    json!({"command": r.command, "is_read_only": is_ro})
+    let risk = match api::RiskCategory::try_from(r.risk_category)
+        .unwrap_or(api::RiskCategory::Unspecified)
+    {
+        api::RiskCategory::ReadOnly => "read_only",
+        api::RiskCategory::TrivialLocalChange => "trivial_local_change",
+        api::RiskCategory::NontrivialLocalChange => "nontrivial_local_change",
+        api::RiskCategory::ExternalChange => "external_change",
+        api::RiskCategory::Risky => "risky",
+        api::RiskCategory::Unspecified => "read_only",
+    };
+    json!({"command": r.command, "risk_category": risk})
 }
 
 fn run_shell_result_to_text(r: &api::RunShellCommandResult) -> String {

@@ -976,6 +976,13 @@ impl ServerApi {
         request: &GenerateAIInputSuggestionsRequest,
     ) -> Result<generate_ai_input_suggestions::GenerateAIInputSuggestionsResponseV2, AIApiError>
     {
+        // warp-cn fork: in Direct LLM mode all Warp-cloud AI auxiliaries are
+        // bypassed. Returning an empty response keeps the next-command
+        // predictor quiet without surfacing the `skip_login` bail to the user.
+        #[cfg(feature = "direct_llm_backend")]
+        if warp_core::features::FeatureFlag::DirectLlmBackend.is_enabled() {
+            return Ok(Default::default());
+        }
         let auth_token = self.get_or_refresh_access_token().await?;
 
         let request_builder = self.client.post(format!(
@@ -1000,6 +1007,11 @@ impl ServerApi {
         &self,
         request: &GetRelevantFiles,
     ) -> Result<GetRelevantFilesResponse, AIApiError> {
+        // warp-cn fork: see `generate_ai_input_suggestions` above.
+        #[cfg(feature = "direct_llm_backend")]
+        if warp_core::features::FeatureFlag::DirectLlmBackend.is_enabled() {
+            return Ok(Default::default());
+        }
         let auth_token = self.get_or_refresh_access_token().await?;
 
         let request_builder = self.client.post(format!(
@@ -1026,6 +1038,11 @@ impl ServerApi {
         &self,
         request: &GenerateAMQuerySuggestionsRequest,
     ) -> Result<generate_am_query_suggestions::GenerateAMQuerySuggestionsResponse, AIApiError> {
+        // warp-cn fork: see `generate_ai_input_suggestions` above.
+        #[cfg(feature = "direct_llm_backend")]
+        if warp_core::features::FeatureFlag::DirectLlmBackend.is_enabled() {
+            return Ok(Default::default());
+        }
         let auth_token = self.get_or_refresh_access_token().await?;
 
         cfg_if::cfg_if! {
@@ -1061,6 +1078,13 @@ impl ServerApi {
         &self,
         request: &PredictAMQueriesRequest,
     ) -> Result<PredictAMQueriesResponse, AIApiError> {
+        // warp-cn fork: see `generate_ai_input_suggestions` above.
+        #[cfg(feature = "direct_llm_backend")]
+        if warp_core::features::FeatureFlag::DirectLlmBackend.is_enabled() {
+            return Ok(PredictAMQueriesResponse {
+                suggestion: String::new(),
+            });
+        }
         let auth_token = self.get_or_refresh_access_token().await?;
         let request_builder = self.client.post(format!(
             "{}/ai/predict_am_queries",

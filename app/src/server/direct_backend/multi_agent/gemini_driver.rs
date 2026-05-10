@@ -268,7 +268,7 @@ fn project_contents(turns: &[NormalizedTurn]) -> Vec<Value> {
                 }
                 json!({"role": "user", "parts": parts})
             }
-            NormalizedTurn::Assistant { text, tool_uses } => {
+            NormalizedTurn::Assistant { text, tool_uses, reasoning: _ } => {
                 let mut parts: Vec<Value> = Vec::new();
                 if let Some(t) = text {
                     if !t.is_empty() {

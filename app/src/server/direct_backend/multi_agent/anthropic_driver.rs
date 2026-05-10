@@ -409,7 +409,7 @@ fn project_messages(turns: &[NormalizedTurn]) -> Vec<Value> {
                     json!({"role": "user", "content": blocks})
                 }
             }
-            NormalizedTurn::Assistant { text, tool_uses } => {
+            NormalizedTurn::Assistant { text, tool_uses, reasoning: _ } => {
                 let mut blocks: Vec<Value> = Vec::new();
                 if let Some(t) = text {
                     blocks.push(json!({"type": "text", "text": t}));

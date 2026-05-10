@@ -79,6 +79,14 @@ pub enum DriverStreamChunk {
         block_idx: u32,
         text: String,
     },
+    /// Chain-of-thought tokens emitted by reasoning models (DeepSeek-R1 /
+    /// o1-style). Rendered as a separate `AgentReasoning` message so it
+    /// shows up as a foldable thinking block instead of being concatenated
+    /// onto the visible reply.
+    ReasoningDelta {
+        block_idx: u32,
+        text: String,
+    },
     /// A tool_use block has begun. Adapter ignores; here for tracing.
     #[allow(dead_code)]
     ToolUseStart {
@@ -147,6 +155,13 @@ pub(super) async fn aggregate_stream_to_output(
                     blocks.push(DecodedBlock::Text(text));
                     text_by_idx.insert(block_idx, pos);
                 }
+            }
+            DriverStreamChunk::ReasoningDelta { .. } => {
+                // The legacy aggregator path is only used by the 36 baseline
+                // unit tests, which assert on visible text. Reasoning tokens
+                // are intentionally dropped here so test assertions stay
+                // stable; the streaming path renders them as a separate
+                // `AgentReasoning` bubble in the UI.
             }
             DriverStreamChunk::ToolUseStart { .. } => {}
             DriverStreamChunk::ToolUseComplete {
@@ -348,7 +363,7 @@ pub fn run(request: &api::Request) -> AIOutputStream<api::ResponseEvent> {
         .filter(|s| !s.is_empty())
         .unwrap_or_else(|| Uuid::new_v4().to_string());
 
-    let provider = match resolve_provider() {
+    let mut provider = match resolve_provider() {
         Some(p) => p,
         None => return error_stream(conversation_id, NO_PROVIDER.into()),
     };
@@ -360,6 +375,23 @@ pub fn run(request: &api::Request) -> AIOutputStream<api::ResponseEvent> {
             "Direct LLM Agent Mode received a request with no user input.".into(),
         );
     }
+
+    // Picker selection overrides the per-provider default. Without this the
+    // dynamic catalog ID (e.g. `deepseek-v4-flash`) shown in `/MODEL` would
+    // be ignored and DeepSeek would reject the request because we shipped
+    // the OpenAI default `gpt-4o-mini`.
+    if let Some(base) = decoded.base_model.as_deref() {
+        provider.model_id = base.to_owned();
+    }
+
+    log::info!(
+        "DirectBackend run: provider={:?} model={} turns={} mcp_servers={} existing_task={}",
+        provider.kind,
+        provider.model_id,
+        decoded.turns.len(),
+        decoded.mcp_context.as_ref().map(|m| m.servers.len()).unwrap_or(0),
+        decoded.existing_task_id.is_some(),
+    );
 
     let conv_id = if decoded.conversation_id.is_empty() {
         conversation_id

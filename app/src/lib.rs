@@ -2661,6 +2661,15 @@ pub fn enabled_features() -> HashSet<FeatureFlag> {
         FeatureFlag::FullSourceCodeEmbedding,
         #[cfg(feature = "auggie_codebase_index")]
         FeatureFlag::AuggieCodebaseIndex,
+        // warp-cn fork: pair the cargo feature with the runtime flag so debug
+        // builds also short-circuit AI traffic. Without this the flag was only
+        // toggled in release bundles via `RELEASE_FLAGS`, leaving every dev
+        // build to fall through `multi_agent::run`'s short-circuit and bail on
+        // `skip_login` at the auth layer.
+        #[cfg(feature = "direct_llm_backend")]
+        FeatureFlag::DirectLlmBackend,
+        #[cfg(feature = "direct_llm_backend")]
+        FeatureFlag::SoloUserByok,
         #[cfg(feature = "use_tantivy_search")]
         FeatureFlag::UseTantivySearch,
         #[cfg(feature = "grep_tool")]

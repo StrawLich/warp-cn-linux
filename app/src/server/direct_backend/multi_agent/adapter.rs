@@ -15,13 +15,16 @@ use super::tool_schema;
 use super::{DriverChunkStream, DriverStreamChunk};
 use crate::server::server_api::AIApiError;
 
-/// Adapter state. `text_messages` maps producer block_idx → the synthesized
-/// `api::Message.id` we minted for that block, so subsequent TextDeltas know
-/// which message to `AppendToMessageContent` against.
+/// Adapter state. `text_messages` / `reasoning_messages` map producer
+/// block_idx → the synthesized `api::Message.id` we minted for that block,
+/// so subsequent deltas know which message to `AppendToMessageContent`
+/// against. Reasoning and text are tracked separately so they each land in
+/// their own message bubble (`AgentReasoning` vs `AgentOutput`).
 struct AdapterState {
     task_id: String,
     request_id: String,
     text_messages: HashMap<u32, String>,
+    reasoning_messages: HashMap<u32, String>,
     /// Captured `Stop` payload — emitted as `Finished` once the source
     /// stream closes (or as soon as we observe it, depending on adapter).
     stop: Option<DriverStreamChunk>,
@@ -35,10 +38,12 @@ pub fn adapt(
     task_id: String,
     request_id: String,
 ) -> impl Stream<Item = Result<api::ResponseEvent, Arc<AIApiError>>> + Send {
+    log::info!("DirectBackend adapter: starting (task={}, request={})", task_id, request_id);
     let state = AdapterState {
         task_id,
         request_id,
         text_messages: HashMap::new(),
+        reasoning_messages: HashMap::new(),
         stop: None,
         finished: false,
     };
@@ -51,6 +56,12 @@ pub fn adapt(
                 None => {
                     // Stream ended. Emit `Finished` synthesized from the captured
                     // Stop chunk (or a generic Done if Stop never arrived).
+                    log::info!(
+                        "DirectBackend adapter: stream drained — emitting Finished (had_stop={}, text_blocks={}, reasoning_blocks={})",
+                        st.stop.is_some(),
+                        st.text_messages.len(),
+                        st.reasoning_messages.len(),
+                    );
                     st.finished = true;
                     let ev = encode::build_finished_from_stop(st.stop.take());
                     return Some((Ok(ev), (src, st)));
@@ -81,6 +92,26 @@ pub fn adapt(
                         return Some((Ok(ev), (src, st)));
                     }
                 }
+                Some(Ok(DriverStreamChunk::ReasoningDelta { block_idx, text })) => {
+                    if text.is_empty() {
+                        continue;
+                    }
+                    if let Some(msg_id) = st.reasoning_messages.get(&block_idx).cloned() {
+                        let ev =
+                            encode::build_append_to_reasoning(&st.task_id, &msg_id, &text);
+                        return Some((Ok(ev), (src, st)));
+                    } else {
+                        let msg_id = Uuid::new_v4().to_string();
+                        st.reasoning_messages.insert(block_idx, msg_id.clone());
+                        let ev = encode::build_add_then_append_reasoning(
+                            &st.task_id,
+                            &st.request_id,
+                            &msg_id,
+                            &text,
+                        );
+                        return Some((Ok(ev), (src, st)));
+                    }
+                }
                 Some(Ok(DriverStreamChunk::ToolUseStart { .. })) => continue,
                 Some(Ok(DriverStreamChunk::ToolUseComplete {
                     tool_use_id,
@@ -88,6 +119,10 @@ pub fn adapt(
                     parsed_input,
                     ..
                 })) => {
+                    log::info!(
+                        "DirectBackend adapter: ToolUseComplete name={} id={} args={}",
+                        name, tool_use_id, parsed_input,
+                    );
                     let kind = match tool_schema::from_name(&name) {
                         Some(k) => k,
                         None => {
@@ -116,6 +151,10 @@ pub fn adapt(
                             return Some((Ok(ev), (src, st)));
                         }
                     };
+                    log::info!(
+                        "DirectBackend adapter: emitting ToolCall name={} id={}",
+                        name, tool_use_id,
+                    );
                     let ev = encode::build_tool_call_message_action(
                         &st.task_id,
                         &st.request_id,
@@ -133,6 +172,19 @@ pub fn adapt(
                     return Some((Ok(ev), (src, st)));
                 }
                 Some(Ok(stop @ DriverStreamChunk::Stop { .. })) => {
+                    if let DriverStreamChunk::Stop {
+                        stop_reason,
+                        input_tokens,
+                        output_tokens,
+                        model_id,
+                        ..
+                    } = &stop
+                    {
+                        log::info!(
+                            "DirectBackend adapter: captured Stop reason={:?} in_tokens={:?} out_tokens={:?} model={}",
+                            stop_reason, input_tokens, output_tokens, model_id,
+                        );
+                    }
                     st.stop = Some(stop);
                     // Don't emit yet — wait for stream close so we don't miss
                     // any trailing chunks (Anthropic sends `message_delta` with

@@ -43,6 +43,11 @@ pub enum NormalizedTurn {
     Assistant {
         text: Option<String>,
         tool_uses: Vec<ToolUse>,
+        /// Chain-of-thought from reasoning models. DeepSeek-R1 / o1 require
+        /// the prior turn's `reasoning_content` to be echoed back in the
+        /// next request, otherwise they reject with HTTP 400. Other
+        /// providers (Anthropic / Gemini) ignore this.
+        reasoning: Option<String>,
     },
 }
 
@@ -64,6 +69,12 @@ pub struct DecodedRequest {
     /// driver so the system prompt can advertise valid `server_id` values
     /// for the `read_mcp_resource` / `call_mcp_tool` Tier-3 tools.
     pub mcp_context: Option<api::request::McpContext>,
+    /// `Settings.ModelConfig.base` — the LLM ID the user chose in the
+    /// `/MODEL` picker. When present this **overrides** the configured
+    /// `DirectBackendConfig` `model_id` so the picker selection actually
+    /// reaches the provider, instead of silently falling back to the
+    /// per-provider default (`gpt-4o-mini` / `claude-sonnet-4-6` / …).
+    pub base_model: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -71,6 +82,7 @@ enum Atom {
     UserText(String),
     UserToolResult(ToolResult),
     AssistantText(String),
+    AssistantReasoning(String),
     AssistantToolUse(ToolUse),
 }
 
@@ -132,6 +144,13 @@ pub fn decode(req: &api::Request) -> DecodedRequest {
         }
     };
 
+    let base_model = req
+        .settings
+        .as_ref()
+        .and_then(|s| s.model_config.as_ref())
+        .map(|mc| mc.base.trim().to_owned())
+        .filter(|s| !s.is_empty());
+
     DecodedRequest {
         conversation_id,
         existing_task_id,
@@ -139,6 +158,7 @@ pub fn decode(req: &api::Request) -> DecodedRequest {
         history_compatible: compat,
         has_user_input,
         mcp_context: req.mcp_context.clone(),
+        base_model,
     }
 }
 
@@ -152,6 +172,7 @@ fn coalesce(atoms: Vec<Atom>) -> Vec<NormalizedTurn> {
         );
 
         let mut text_parts: Vec<String> = Vec::new();
+        let mut reasoning_parts: Vec<String> = Vec::new();
         let mut tool_uses: Vec<ToolUse> = Vec::new();
         let mut tool_results: Vec<ToolResult> = Vec::new();
 
@@ -167,6 +188,7 @@ fn coalesce(atoms: Vec<Atom>) -> Vec<NormalizedTurn> {
                 Atom::UserText(t) => text_parts.push(t),
                 Atom::UserToolResult(r) => tool_results.push(r),
                 Atom::AssistantText(t) => text_parts.push(t),
+                Atom::AssistantReasoning(r) => reasoning_parts.push(r),
                 Atom::AssistantToolUse(u) => tool_uses.push(u),
             }
             i += 1;
@@ -177,6 +199,11 @@ fn coalesce(atoms: Vec<Atom>) -> Vec<NormalizedTurn> {
         } else {
             Some(text_parts.join("\n\n"))
         };
+        let reasoning = if reasoning_parts.is_empty() {
+            None
+        } else {
+            Some(reasoning_parts.join("\n\n"))
+        };
 
         if is_user {
             // Skip empty user turns (no text, no results) — they emit nothing
@@ -184,8 +211,8 @@ fn coalesce(atoms: Vec<Atom>) -> Vec<NormalizedTurn> {
             if text.is_some() || !tool_results.is_empty() {
                 out.push(NormalizedTurn::User { text, tool_results });
             }
-        } else if text.is_some() || !tool_uses.is_empty() {
-            out.push(NormalizedTurn::Assistant { text, tool_uses });
+        } else if text.is_some() || !tool_uses.is_empty() || reasoning.is_some() {
+            out.push(NormalizedTurn::Assistant { text, tool_uses, reasoning });
         }
     }
     out
@@ -208,6 +235,11 @@ fn project_history_message(
         Some(M::AgentOutput(ao)) => {
             if !ao.text.is_empty() {
                 out.push(Atom::AssistantText(ao.text.clone()));
+            }
+        }
+        Some(M::AgentReasoning(ar)) => {
+            if !ar.reasoning.is_empty() {
+                out.push(Atom::AssistantReasoning(ar.reasoning.clone()));
             }
         }
         Some(M::ToolCall(tc)) => match tc.tool.as_ref() {
@@ -271,7 +303,10 @@ fn project_user_input(
                         tool_kind,
                         content,
                         is_error,
-                    }))
+                    }));
+                    // Tool results are the user-side input of the next agent
+                    // turn — without this, multi-turn loops bail at `has_user_input`.
+                    *has_user_input = true;
                 }
                 None => *compat = false,
             },
@@ -378,7 +413,7 @@ mod tests {
         };
         let d = decode(&req);
         assert_eq!(d.turns.len(), 2);
-        if let NormalizedTurn::Assistant { text, tool_uses } = &d.turns[1] {
+        if let NormalizedTurn::Assistant { text, tool_uses, .. } = &d.turns[1] {
             assert_eq!(text.as_deref(), Some("here goes"));
             assert_eq!(tool_uses.len(), 1);
             assert_eq!(tool_uses[0].tool_use_id, "tc1");

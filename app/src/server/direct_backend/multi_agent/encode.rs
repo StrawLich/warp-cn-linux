@@ -188,8 +188,12 @@ pub fn build_add_then_append_text(
             },
         )),
     };
+    // FieldMask path: prost-reflect's `get_field_by_name` doesn't surface
+    // oneof container names (`message` here), so the leading "message." segment
+    // is silently ignored and the append is no-op'd. The first segment must be
+    // the actual proto field name of the oneof variant (`agent_output`).
     let mask = prost_types::FieldMask {
-        paths: vec!["message.agent_output.text".into()],
+        paths: vec!["agent_output.text".into()],
     };
     api::ResponseEvent {
         r#type: Some(api::response_event::Type::ClientActions(
@@ -214,6 +218,104 @@ pub fn build_add_then_append_text(
     }
 }
 
+/// Reasoning analogue of [`build_add_then_append_text`]. Produces an
+/// `AgentReasoning` message bubble (rendered as a foldable thinking block)
+/// for chain-of-thought tokens from DeepSeek-R1 / o1-style models.
+pub fn build_add_then_append_reasoning(
+    task_id: &str,
+    request_id: &str,
+    msg_id: &str,
+    delta: &str,
+) -> api::ResponseEvent {
+    let empty_msg = api::Message {
+        id: msg_id.to_string(),
+        task_id: task_id.into(),
+        request_id: request_id.into(),
+        timestamp: None,
+        server_message_data: String::new(),
+        citations: vec![],
+        message: Some(api::message::Message::AgentReasoning(
+            api::message::AgentReasoning {
+                reasoning: String::new(),
+                finished_duration: None,
+            },
+        )),
+    };
+    let delta_msg = api::Message {
+        id: msg_id.to_string(),
+        task_id: task_id.into(),
+        request_id: request_id.into(),
+        timestamp: None,
+        server_message_data: String::new(),
+        citations: vec![],
+        message: Some(api::message::Message::AgentReasoning(
+            api::message::AgentReasoning {
+                reasoning: delta.to_string(),
+                finished_duration: None,
+            },
+        )),
+    };
+    let mask = prost_types::FieldMask {
+        paths: vec!["agent_reasoning.reasoning".into()],
+    };
+    api::ResponseEvent {
+        r#type: Some(api::response_event::Type::ClientActions(
+            api::response_event::ClientActions {
+                actions: vec![
+                    wrap_action(api::client_action::Action::AddMessagesToTask(
+                        api::client_action::AddMessagesToTask {
+                            task_id: task_id.into(),
+                            messages: vec![empty_msg],
+                        },
+                    )),
+                    wrap_action(api::client_action::Action::AppendToMessageContent(
+                        api::client_action::AppendToMessageContent {
+                            task_id: task_id.into(),
+                            message: Some(delta_msg),
+                            mask: Some(mask),
+                        },
+                    )),
+                ],
+            },
+        )),
+    }
+}
+
+pub fn build_append_to_reasoning(task_id: &str, msg_id: &str, delta: &str) -> api::ResponseEvent {
+    let delta_msg = api::Message {
+        id: msg_id.to_string(),
+        task_id: task_id.into(),
+        request_id: String::new(),
+        timestamp: None,
+        server_message_data: String::new(),
+        citations: vec![],
+        message: Some(api::message::Message::AgentReasoning(
+            api::message::AgentReasoning {
+                reasoning: delta.to_string(),
+                finished_duration: None,
+            },
+        )),
+    };
+    let mask = prost_types::FieldMask {
+        paths: vec!["agent_reasoning.reasoning".into()],
+    };
+    api::ResponseEvent {
+        r#type: Some(api::response_event::Type::ClientActions(
+            api::response_event::ClientActions {
+                actions: vec![wrap_action(
+                    api::client_action::Action::AppendToMessageContent(
+                        api::client_action::AppendToMessageContent {
+                            task_id: task_id.into(),
+                            message: Some(delta_msg),
+                            mask: Some(mask),
+                        },
+                    ),
+                )],
+            },
+        )),
+    }
+}
+
 pub fn build_append_to_text(task_id: &str, msg_id: &str, delta: &str) -> api::ResponseEvent {
     let delta_msg = api::Message {
         id: msg_id.to_string(),
@@ -228,8 +330,12 @@ pub fn build_append_to_text(task_id: &str, msg_id: &str, delta: &str) -> api::Re
             },
         )),
     };
+    // FieldMask path: prost-reflect's `get_field_by_name` doesn't surface
+    // oneof container names (`message` here), so the leading "message." segment
+    // is silently ignored and the append is no-op'd. The first segment must be
+    // the actual proto field name of the oneof variant (`agent_output`).
     let mask = prost_types::FieldMask {
-        paths: vec!["message.agent_output.text".into()],
+        paths: vec!["agent_output.text".into()],
     };
     api::ResponseEvent {
         r#type: Some(api::response_event::Type::ClientActions(
