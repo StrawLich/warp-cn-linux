@@ -16,6 +16,7 @@ settings-platform-col-last-used = 最后使用
 settings-platform-col-expires-at = 过期时间
 settings-platform-scope-personal = 个人
 settings-platform-scope-team = 团队
+settings-platform-scope-agent = 智能体
 
 settings-environments-no-match = 没有匹配您搜索的环境。
 settings-environments-empty-title = 您尚未设置任何环境。
@@ -24,7 +25,9 @@ settings-environments-setup-prompt = 选择您希望如何设置环境：
 settings-platform-api-key-secret-info = 该密钥仅显示一次，请复制并妥善保管。
 settings-platform-api-key-name-label = 名称
 settings-platform-api-key-type-label = 类型
+settings-platform-api-key-agent-label = 智能体
 settings-platform-api-key-expiration-label = 过期时间
+settings-platform-no-agents-available = 暂无可用智能体，请先创建一个。
 settings-platform-api-key-deleted = API 密钥已删除
 settings-platform-create-api-key-help-line1 = 创建并管理 API 密钥，以允许其他 Oz cloud 智能体访问你的 Warp 账户。
 settings-platform-create-api-key-help-line2-prefix = 详细信息请见

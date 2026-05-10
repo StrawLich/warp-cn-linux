@@ -16,6 +16,7 @@ settings-platform-col-last-used = Last used
 settings-platform-col-expires-at = Expires at
 settings-platform-scope-personal = Personal
 settings-platform-scope-team = Team
+settings-platform-scope-agent = Agent
 
 settings-environments-no-match = No environments match your search.
 settings-environments-empty-title = You haven't set up any environments yet.
@@ -24,7 +25,9 @@ settings-environments-setup-prompt = Choose how you'd like to set up your enviro
 settings-platform-api-key-secret-info = This secret key is shown only once. Copy and store it securely.
 settings-platform-api-key-name-label = Name
 settings-platform-api-key-type-label = Type
+settings-platform-api-key-agent-label = Agent
 settings-platform-api-key-expiration-label = Expiration
+settings-platform-no-agents-available = No agents available. Create one first.
 settings-platform-api-key-deleted = API key deleted
 settings-platform-create-api-key-help-line1 = Create and manage API keys to allow other Oz cloud agents to access your Warp account.
 settings-platform-create-api-key-help-line2-prefix = For more information, visit the
