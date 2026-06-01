@@ -8,6 +8,10 @@ pub mod datetime_ext;
 pub mod direct_backend;
 pub mod experiments;
 pub mod graphql;
+// IAP items are only referenced from native code paths; on wasm the
+// module compiles but every function is dead code.
+#[cfg_attr(target_family = "wasm", allow(dead_code))]
+pub(crate) mod iap;
 pub mod ids;
 pub mod network_log_pane_manager;
 pub mod network_log_view;

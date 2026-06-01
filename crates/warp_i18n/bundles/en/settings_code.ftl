@@ -52,6 +52,16 @@ settings-code-status-stale = Stale
 settings-code-status-failed = Failed
 settings-code-status-no-index-built = No index built
 
+# Remote indexing status
+settings-code-status-remote-index-limit-reached = Index limit reached
+settings-code-status-remote-unavailable = Unavailable
+settings-code-status-remote-disabled = Disabled
+settings-code-status-remote-queued = Queued
+settings-code-status-remote-indexing-progress = Indexing - {$completed} / {$total}
+settings-code-status-remote-indexing-count = Indexing - {$completed}
+settings-code-status-remote-indexing-total = Indexing - 0 / {$total}
+settings-code-status-remote-indexing = Indexing...
+
 # Index usage report ("metadata bar" beneath the status row)
 settings-code-stats-files = {$count} files
 settings-code-stats-chunks = {$count} chunks

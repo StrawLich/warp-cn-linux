@@ -151,3 +151,5 @@ terminal-input-placeholder-search-commands = Search commands
 terminal-input-placeholder-search-prompts = Search prompts
 terminal-input-placeholder-search-indexed-repos = Search indexed repos
 terminal-input-placeholder-search-plans = Search plans
+terminal-fork = Fork
+terminal-copy-share-link = Copy share link

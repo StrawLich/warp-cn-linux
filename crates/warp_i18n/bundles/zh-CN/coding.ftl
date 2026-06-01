@@ -55,3 +55,4 @@ coding-loading = 加载中…
 # Mermaid 图渲染失败提示
 coding-mermaid-error-rendering = Mermaid 图渲染出错，请检查语法。
 coding-mermaid-failed-rendering = Mermaid 图渲染失败
+coding-remote-host-disconnected = 远程主机已断开连接。你将无法看到更新或保存更改。

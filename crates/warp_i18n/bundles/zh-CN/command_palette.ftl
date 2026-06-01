@@ -62,6 +62,7 @@ command-open-settings-mcp-servers = 打开设置：MCP 服务器
 
 # 反馈 / 外部链接。
 command-send-feedback = 发送反馈（打开外部链接）
+command-send-feedback-with-oz = 用 Oz 发送反馈
 
 # 终端侧命令。
 command-edit-prompt = 编辑提示符

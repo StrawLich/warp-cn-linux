@@ -21,6 +21,7 @@ dirs.workspace = true
 directories.workspace = true
 shellexpand.workspace = true
 enum-iterator.workspace = true
+futures-lite.workspace = true
 warp_features.workspace = true
 itertools.workspace = true
 getset.workspace = true
@@ -28,6 +29,7 @@ http.workspace = true
 lazy_static.workspace = true
 log.workspace = true
 parking_lot.workspace = true
+pin-project.workspace = true
 reqwest.workspace = true
 serde.workspace = true
 settings.workspace = true
@@ -62,6 +64,10 @@ chrono.workspace = true
 tokio.workspace = true
 
 [target.'cfg(target_os = "macos")'.dependencies]
+# warp-cn fork: read_warp_version_from_bundle / app_id_from_bundle in
+# channel/state.rs use the cocoa/objc bindings (interop with warpui's
+# cocoa-based make_nsstring / AutoreleasePoolGuard helpers). Upstream's objc2
+# migration dropped these here; keep them alongside objc2-foundation.
 cocoa.workspace = true
 objc.workspace = true
 objc2-foundation = { workspace = true, features = [

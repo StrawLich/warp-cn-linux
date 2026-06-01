@@ -1,8 +1,30 @@
-use pathfinder_geometry::vector::Vector2F;
 use std::collections::{HashMap, HashSet};
 use std::ops::Range;
 use std::sync::{Arc, Mutex};
 
+use pathfinder_geometry::vector::Vector2F;
+use warp_core::features::FeatureFlag;
+use warp_core::send_telemetry_from_ctx;
+use warp_core::ui::Icon;
+use warp_editor::editor::NavigationKey;
+use warpui::elements::{
+    Border, ChildAnchor, ChildView, Clipped, ConstrainedBox, Container, CornerRadius,
+    CrossAxisAlignment, Element, Fill, Flex, FormattedTextElement, Hoverable, MainAxisAlignment,
+    MainAxisSize, MouseStateHandle, OffsetPositioning, Padding, ParentAnchor, ParentElement,
+    ParentOffsetBounds, Radius, SavePosition, ScrollStateHandle, Scrollable, ScrollableElement,
+    ScrollbarWidth, Shrinkable, Stack, Text, UniformList, UniformListState,
+};
+use warpui::fonts::{Properties, Weight};
+use warpui::keymap::macros::*;
+use warpui::keymap::FixedBinding;
+use warpui::platform::Cursor;
+use warpui::text_layout::TextAlignment;
+use warpui::{
+    AppContext, BlurContext, Entity, EntityId, ModelHandle, SingletonEntity, TypedActionView, View,
+    ViewContext, ViewHandle, WindowId,
+};
+
+use super::view_model::{ConversationEntry, ConversationListViewModel};
 use crate::ai::active_agent_views_model::{ActiveAgentViewsModel, ConversationOrTaskId};
 use crate::ai::agent::conversation::AIConversationId;
 use crate::ai::agent_conversations_model::{
@@ -28,31 +50,8 @@ use crate::workspace::view::conversation_list::item::{
     render_item, render_static_item, ItemProps, ItemState, OverflowMenuDisplay, StaticItemProps,
     STATIC_ITEM_MIN_HEIGHT,
 };
-use crate::workspace::ToastStack;
-use crate::workspace::WorkspaceAction;
-use warp_core::features::FeatureFlag;
-use warp_core::send_telemetry_from_ctx;
-use warp_core::ui::Icon;
+use crate::workspace::{ToastStack, WorkspaceAction};
 use warp_i18n::{t, t_static};
-
-use super::view_model::{ConversationEntry, ConversationListViewModel};
-use warp_editor::editor::NavigationKey;
-use warpui::elements::{
-    Border, ChildAnchor, ChildView, Clipped, ConstrainedBox, Container, CornerRadius,
-    CrossAxisAlignment, Element, Fill, Flex, FormattedTextElement, Hoverable, MainAxisAlignment,
-    MainAxisSize, MouseStateHandle, OffsetPositioning, Padding, ParentAnchor, ParentElement,
-    ParentOffsetBounds, Radius, SavePosition, ScrollStateHandle, Scrollable, ScrollableElement,
-    ScrollbarWidth, Shrinkable, Stack, Text, UniformList, UniformListState,
-};
-use warpui::fonts::{Properties, Weight};
-use warpui::keymap::macros::*;
-use warpui::keymap::FixedBinding;
-use warpui::platform::Cursor;
-use warpui::text_layout::TextAlignment;
-use warpui::{
-    AppContext, BlurContext, Entity, EntityId, ModelHandle, SingletonEntity, TypedActionView, View,
-    ViewContext, ViewHandle, WindowId,
-};
 
 /// Maximum number of past items to show before the user toggles "view all".
 const INITIAL_MAX_PAST_ITEMS: usize = 10;

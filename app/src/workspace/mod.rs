@@ -1,5 +1,6 @@
 mod action;
 mod active_session;
+pub(crate) mod auto_handoff;
 pub mod bonus_grant_notification_model;
 #[cfg(target_os = "macos")]
 mod cli_install;
@@ -17,57 +18,49 @@ mod one_time_modal_model;
 mod registry;
 pub mod rewind_confirmation_dialog;
 pub mod sync_inputs;
+pub mod tab_group;
 pub mod tab_settings;
 mod toast_stack;
 pub mod util;
 pub mod view;
 
-use crate::ai::blocklist::NEW_AGENT_PANE_LABEL;
-use crate::ai::skills::SkillManager;
-use crate::ai::AIRequestUsageModel;
-use crate::channel::Channel;
-use crate::code;
-use crate::features::FeatureFlag;
-use crate::modal;
-use crate::notebooks;
-use crate::pane_group::TabBarHoverIndex;
-use crate::server::telemetry::AgentModeEntrypoint;
-use crate::server::telemetry::PaletteSource;
-use crate::settings::AISettings;
-use crate::settings_view::{self, flags, SettingsSection};
-use crate::tab::uses_vertical_tabs;
-use crate::tab_configs;
-use warpui::SingletonEntity;
-
-use crate::channel::ChannelState;
-
-use crate::util::bindings::{
-    self, cmd_or_ctrl_shift, is_binding_pty_compliant, BindingDescriptionFluentExt, CustomAction,
-};
-
-use crate::palette::PaletteMode;
-use serde::{Deserialize, Serialize};
-use warp_core::context_flag::ContextFlag;
-use warp_i18n::t;
-use warpui::accessibility::AccessibilityVerbosity;
-use warpui::elements::DropTargetData;
-use warpui::keymap::FixedBinding;
-use warpui::keymap::{BindingDescription, EditableBinding};
-use warpui::AppContext;
-
 pub use action::{
-    CommandSearchOptions, InitContent, RestoreConversationLayout, TabContextMenuAnchor,
-    VerticalTabsPaneContextMenuTarget, WorkspaceAction,
+    AutoCloudHandoffTrigger, CommandSearchOptions, InitContent, RestoreConversationLayout,
+    TabContextMenuAnchor, VerticalTabsPaneContextMenuTarget, WorkspaceAction,
 };
 pub use active_session::ActiveSession;
 pub use global_actions::{
     ForkAIConversationParams, ForkFromExchange, ForkedConversationDestination,
 };
+use serde::{Deserialize, Serialize};
 pub use util::{active_terminal_in_window, PaneViewLocator, TabMovement};
 pub use view::{
     Workspace, NEW_SESSION_MENU_BUTTON_POSITION_ID, NEW_TAB_BUTTON_POSITION_ID,
     PANEL_HEADER_HEIGHT, TAB_BAR_HEIGHT, TOTAL_TAB_BAR_HEIGHT, WORKSPACE_PADDING,
 };
+use warp_core::context_flag::ContextFlag;
+use warp_i18n::t;
+use warpui::accessibility::AccessibilityVerbosity;
+use warpui::elements::DropTargetData;
+use warpui::keymap::{BindingDescription, EditableBinding, FixedBinding};
+use warpui::AppContext;
+use warpui::SingletonEntity;
+
+use crate::ai::blocklist::NEW_AGENT_PANE_LABEL;
+use crate::ai::skills::SkillManager;
+use crate::ai::AIRequestUsageModel;
+use crate::channel::{Channel, ChannelState};
+use crate::features::FeatureFlag;
+use crate::palette::PaletteMode;
+use crate::pane_group::TabBarHoverIndex;
+use crate::server::telemetry::{AgentModeEntrypoint, PaletteSource};
+use crate::settings::AISettings;
+use crate::settings_view::{self, flags, SettingsSection};
+use crate::tab::uses_vertical_tabs;
+use crate::util::bindings::{
+    self, cmd_or_ctrl_shift, is_binding_pty_compliant, BindingDescriptionFluentExt, CustomAction,
+};
+use crate::{code, modal, notebooks, tab_configs};
 
 // Helper function to access panel header corner radius from other modules
 pub fn panel_header_corner_radius() -> warpui::elements::CornerRadius {
@@ -88,6 +81,10 @@ pub fn is_feedback_skill_available(ctx: &AppContext) -> bool {
             .is_some()
 }
 
+pub use one_time_modal_model::OneTimeModalModel;
+pub use registry::WorkspaceRegistry;
+pub use toast_stack::ToastStack;
+
 use crate::workspace::view::{
     LEFT_PANEL_AGENT_CONVERSATIONS_BINDING_NAME, LEFT_PANEL_GLOBAL_SEARCH_BINDING_NAME,
     LEFT_PANEL_PROJECT_EXPLORER_BINDING_NAME, LEFT_PANEL_WARP_DRIVE_BINDING_NAME,
@@ -98,9 +95,6 @@ use crate::workspace::view::{
     TOGGLE_TAB_CONFIGS_MENU_BINDING_NAME, TOGGLE_VERTICAL_TABS_PANEL_BINDING_NAME,
     TOGGLE_WARP_DRIVE_BINDING_NAME,
 };
-pub use one_time_modal_model::OneTimeModalModel;
-pub use registry::WorkspaceRegistry;
-pub use toast_stack::ToastStack;
 
 pub fn init(app: &mut AppContext) {
     app.add_singleton_model(|_| WorkspaceRegistry::new());
@@ -118,6 +112,7 @@ pub fn init(app: &mut AppContext) {
     tab_configs::session_config_modal::init(app);
     view::launch_modal::oz_launch::init(app);
     view::openwarp_launch_modal::init(app);
+    view::orchestration_launch_modal::init(app);
     view::cloud_agent_capacity_modal::init(app);
     view::codex_modal::init(app);
     view::free_tier_limit_hit_modal::init(app);
@@ -238,6 +233,18 @@ pub fn init(app: &mut AppContext) {
                         "binding-workspace-debug-reset-openwarp-launch-modal",
                     ),
                     WorkspaceAction::ResetOpenWarpLaunchModalState,
+                )
+                .with_context_predicate(id!("Workspace")),
+                EditableBinding::new(
+                    "workspace:open_orchestration_launch_modal",
+                    "[Debug] Open Orchestration Launch Modal",
+                    WorkspaceAction::OpenOrchestrationLaunchModal,
+                )
+                .with_context_predicate(id!("Workspace")),
+                EditableBinding::new(
+                    "workspace:reset_orchestration_launch_modal_state",
+                    "[Debug] Reset Orchestration Launch Modal State",
+                    WorkspaceAction::ResetOrchestrationLaunchModalState,
                 )
                 .with_context_predicate(id!("Workspace")),
                 EditableBinding::new(
@@ -772,6 +779,14 @@ pub fn init(app: &mut AppContext) {
         .with_enabled(|| FeatureFlag::VerticalTabs.is_enabled())
         .with_key_binding(cmd_or_ctrl_shift("b")),
         EditableBinding::new(
+            LEFT_PANEL_PROJECT_EXPLORER_BINDING_NAME,
+            BindingDescription::new(t!("command-left-panel-project-explorer")),
+            WorkspaceAction::ToggleProjectExplorer,
+        )
+        .with_group(bindings::BindingGroup::Navigation.as_str())
+        .with_context_predicate(id!("Workspace") & id!(flags::SHOW_PROJECT_EXPLORER))
+        .with_custom_action(CustomAction::ToggleProjectExplorer),
+        EditableBinding::new(
             LEFT_PANEL_AGENT_CONVERSATIONS_BINDING_NAME,
             BindingDescription::new(t!("command-left-panel-agent-conversations")),
             WorkspaceAction::ToggleConversationListView,
@@ -780,14 +795,6 @@ pub fn init(app: &mut AppContext) {
         .with_context_predicate(id!("Workspace") & id!(flags::SHOW_CONVERSATION_HISTORY))
         .with_enabled(|| FeatureFlag::AgentViewConversationListView.is_enabled())
         .with_custom_action(CustomAction::ToggleConversationListView),
-        EditableBinding::new(
-            LEFT_PANEL_PROJECT_EXPLORER_BINDING_NAME,
-            BindingDescription::new(t!("command-left-panel-project-explorer")),
-            WorkspaceAction::ToggleProjectExplorer,
-        )
-        .with_group(bindings::BindingGroup::Navigation.as_str())
-        .with_context_predicate(id!("Workspace") & id!(flags::SHOW_PROJECT_EXPLORER))
-        .with_custom_action(CustomAction::ToggleProjectExplorer),
         EditableBinding::new(
             LEFT_PANEL_GLOBAL_SEARCH_BINDING_NAME,
             BindingDescription::new(t!("command-left-panel-global-search")),
@@ -1586,7 +1593,8 @@ fn add_overflow_menu_items_as_editable_binding(app: &mut AppContext) {
         EditableBinding::new(
             "workspace:send_feedback",
             BindingDescription::new(t!("command-send-feedback")).with_dynamic_override(|ctx| {
-                is_feedback_skill_available(ctx).then(|| "Send feedback with Oz".into())
+                is_feedback_skill_available(ctx)
+                    .then(|| t!("command-send-feedback-with-oz").into())
             }),
             WorkspaceAction::SendFeedback,
         )

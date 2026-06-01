@@ -52,6 +52,16 @@ settings-code-status-stale = 已过期
 settings-code-status-failed = 失败
 settings-code-status-no-index-built = 未建立索引
 
+# 远程索引状态
+settings-code-status-remote-index-limit-reached = 已达索引上限
+settings-code-status-remote-unavailable = 不可用
+settings-code-status-remote-disabled = 已禁用
+settings-code-status-remote-queued = 排队中
+settings-code-status-remote-indexing-progress = 索引中 - {$completed} / {$total}
+settings-code-status-remote-indexing-count = 索引中 - {$completed}
+settings-code-status-remote-indexing-total = 索引中 - 0 / {$total}
+settings-code-status-remote-indexing = 索引中…
+
 # 索引使用情况报告（状态行下方的统计条）
 settings-code-stats-files = {$count} 个文件
 settings-code-stats-chunks = {$count} 个片段

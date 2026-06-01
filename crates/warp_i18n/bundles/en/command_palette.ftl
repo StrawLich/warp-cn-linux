@@ -62,6 +62,7 @@ command-open-settings-mcp-servers = Open Settings: MCP Servers
 
 # Feedback / external.
 command-send-feedback = Send feedback (opens external link)
+command-send-feedback-with-oz = Send feedback with Oz
 
 # Terminal-side commands.
 command-edit-prompt = Edit Prompt

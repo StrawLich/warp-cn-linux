@@ -1,21 +1,17 @@
-use crate::index::Entry;
+use std::collections::{HashSet, VecDeque};
+use std::path::PathBuf;
+
 use anyhow::anyhow;
 use cfg_if::cfg_if;
-use std::{
-    collections::{HashSet, VecDeque},
-    path::PathBuf,
-};
 
+use super::node::{ChildrenPath, MerkleNode, NodeId, NodeLens, NodeMask};
+use super::serialized_tree::SerializedMerkleTree;
+use super::DirEntryOrFragment;
 use crate::index::full_source_code_embedding::fragment_metadata::{
     LeafToFragmentMetadata, LeafToFragmentMetadataUpdates,
 };
 use crate::index::full_source_code_embedding::Error;
-
-use super::{
-    node::{ChildrenPath, MerkleNode, NodeId, NodeLens, NodeMask},
-    serialized_tree::SerializedMerkleTree,
-    DirEntryOrFragment,
-};
+use crate::index::Entry;
 
 /// Aggregate counts walked from the current Merkle tree, surfaced to the
 /// settings UI alongside sync status.
