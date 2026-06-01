@@ -151,3 +151,5 @@ terminal-input-placeholder-search-commands = 搜索命令
 terminal-input-placeholder-search-prompts = 搜索提示词
 terminal-input-placeholder-search-indexed-repos = 搜索已索引仓库
 terminal-input-placeholder-search-plans = 搜索计划
+terminal-fork = Fork
+terminal-copy-share-link = 复制分享链接
