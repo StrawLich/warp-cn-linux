@@ -220,13 +220,13 @@ impl AuggieMcpService {
     ) -> Result<Vec<AuggieExcerpt>, AuggieMcpError> {
         let peer = self.peer_for_codebase_retrieval().await?;
         let result = peer
-            .call_tool(rmcp::model::CallToolRequestParam {
-                name: CODEBASE_RETRIEVAL_TOOL_NAME.into(),
-                arguments: Some(rmcp::model::object(json!({
-                    "information_request": query,
-                    "directory_path": directory.to_string_lossy(),
-                }))),
-            })
+            .call_tool(
+                rmcp::model::CallToolRequestParams::new(CODEBASE_RETRIEVAL_TOOL_NAME)
+                    .with_arguments(rmcp::model::object(json!({
+                        "information_request": query,
+                        "directory_path": directory.to_string_lossy(),
+                    }))),
+            )
             .await
             .map_err(map_service_error)?;
 
@@ -343,19 +343,15 @@ fn cancel_connection(connection: AuggieMcpConnection) {
 }
 
 fn make_client_info() -> rmcp::model::ClientInfo {
-    rmcp::model::ClientInfo {
-        protocol_version: Default::default(),
-        capabilities: Default::default(),
-        client_info: rmcp::model::Implementation {
-            name: warp_core::channel::ChannelState::app_id().to_string(),
-            version: warp_core::channel::ChannelState::app_version()
+    rmcp::model::InitializeRequestParams::new(
+        Default::default(),
+        rmcp::model::Implementation::new(
+            warp_core::channel::ChannelState::app_id().to_string(),
+            warp_core::channel::ChannelState::app_version()
                 .map(|version| version.to_string())
                 .unwrap_or_default(),
-            title: None,
-            icons: None,
-            website_url: None,
-        },
-    }
+        ),
+    )
 }
 
 fn map_service_error(err: rmcp::ServiceError) -> AuggieMcpError {

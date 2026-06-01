@@ -90,6 +90,10 @@ settings-teams-section-restrict-by-domain = Restrict by domain
 settings-teams-section-make-team-discoverable = Make team discoverable
 settings-teams-section-create-a-team = Create a team
 settings-teams-section-or-join-existing = Or, join an existing team within your company
+settings-teams-subsection-invite-team-members = Invite team members
+settings-teams-subsection-by-link = By link
+settings-teams-subsection-by-email = By email
+settings-teams-subsection-by-discovery = By discovery
 
 # Plan / billing
 settings-teams-contact-support = Contact support

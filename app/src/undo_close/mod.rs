@@ -1,17 +1,13 @@
 pub mod settings;
 mod stack;
 
-use warpui::{
-    keymap::{BindingDescription, EditableBinding},
-    AppContext,
-};
+use warpui::keymap::{BindingDescription, EditableBinding};
+use warpui::AppContext;
 
-use crate::{
-    util::bindings::{BindingDescriptionFluentExt, CustomAction},
-    workspace::WorkspaceAction,
-};
-
-pub use self::{settings::UndoCloseSettings, stack::UndoCloseStack, stack::UndoCloseStackEvent};
+pub use self::settings::UndoCloseSettings;
+pub use self::stack::{UndoCloseStack, UndoCloseStackEvent};
+use crate::util::bindings::{BindingDescriptionFluentExt, CustomAction};
+use crate::workspace::WorkspaceAction;
 
 /// Register keybindings for undo close functionality.
 pub fn init(ctx: &mut AppContext) {

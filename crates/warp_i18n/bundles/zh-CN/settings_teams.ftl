@@ -90,6 +90,10 @@ settings-teams-section-restrict-by-domain = 按域名限制
 settings-teams-section-make-team-discoverable = 让团队可被发现
 settings-teams-section-create-a-team = 创建团队
 settings-teams-section-or-join-existing = 或者加入公司内现有的团队
+settings-teams-subsection-invite-team-members = 邀请团队成员
+settings-teams-subsection-by-link = 通过链接
+settings-teams-subsection-by-email = 通过邮件
+settings-teams-subsection-by-discovery = 通过发现
 
 # 方案 / 计费
 settings-teams-contact-support = 联系支持

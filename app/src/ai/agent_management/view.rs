@@ -5,10 +5,34 @@ use std::sync::Arc;
 use fuzzy_match::match_indices_case_insensitive;
 use lazy_static::lazy_static;
 use pathfinder_color::ColorU;
+use pathfinder_geometry::vector::vec2f;
+use settings::Setting;
 use siphasher::sip::SipHasher;
 use warp_core::features::FeatureFlag;
+use warp_core::ui::icons::Icon;
+use warp_core::ui::theme::color::internal_colors;
+use warp_core::ui::theme::Fill;
+use warpui::clipboard::ClipboardContent;
+use warpui::elements::new_scrollable::{
+    NewScrollableElement, ScrollableAppearance, SingleAxisConfig,
+};
+use warpui::elements::{
+    Align, Border, ChildAnchor, ChildView, Clipped, ConstrainedBox, Container, CornerRadius,
+    CrossAxisAlignment, Element, Empty, Expanded, Flex, Hoverable, List, ListState, MainAxisSize,
+    MouseStateHandle, NewScrollable, OffsetPositioning, Padding, ParentAnchor, ParentElement,
+    ParentOffsetBounds, Radius, Rect, ScrollStateHandle, ScrollbarWidth, Shrinkable,
+    SizeConstraintCondition, SizeConstraintSwitch, Stack, Text, Wrap,
+};
+use warpui::fonts::{Properties, Weight};
+use warpui::keymap::FixedBinding;
+use warpui::platform::Cursor;
 use warpui::scene::DropShadow;
 use warpui::ui_components::button::ButtonVariant;
+use warpui::ui_components::components::{UiComponent, UiComponentStyles};
+use warpui::{
+    AppContext, Entity, FocusContext, ModelHandle, SingletonEntity, TypedActionView, View,
+    ViewContext, ViewHandle, WeakViewHandle,
+};
 
 use crate::ai::agent::conversation::AIConversationId;
 use crate::ai::agent_conversations_model::{
@@ -57,39 +81,17 @@ use crate::view_components::action_button::{
 use crate::view_components::compactible_action_button::{
     CompactibleActionButton, MEDIUM_SIZE_SWITCH_THRESHOLD,
 };
-use crate::view_components::dropdown::{Dropdown, DropdownAction, DropdownStyle};
-use crate::view_components::DismissibleToast;
-use crate::view_components::FilterableDropdown;
+use crate::view_components::dropdown::{
+    Dropdown, DropdownAction, DropdownItemAction, DropdownStyle,
+};
+use crate::view_components::{DismissibleToast, FilterableDropdown};
 use crate::workflows::WorkflowType;
-use crate::workspace::{ForkedConversationDestination, ToastStack};
-use crate::workspace::{RestoreConversationLayout, WorkspaceAction};
+use crate::workspace::{
+    ForkedConversationDestination, RestoreConversationLayout, ToastStack, WorkspaceAction,
+};
 use crate::workspaces::user_workspaces::UserWorkspaces;
 use crate::{send_telemetry_from_ctx, AgentModeEntrypoint};
-use pathfinder_geometry::vector::vec2f;
-use settings::Setting;
-use warp_core::ui::icons::Icon;
-use warp_core::ui::theme::color::internal_colors;
-use warp_core::ui::theme::Fill;
 use warp_i18n::t;
-use warpui::clipboard::ClipboardContent;
-use warpui::elements::new_scrollable::{
-    NewScrollableElement, ScrollableAppearance, SingleAxisConfig,
-};
-use warpui::elements::{
-    Align, Border, ChildAnchor, ChildView, Clipped, ConstrainedBox, Container, CornerRadius,
-    CrossAxisAlignment, Element, Empty, Expanded, Flex, Hoverable, List, ListState, MainAxisSize,
-    MouseStateHandle, NewScrollable, OffsetPositioning, Padding, ParentAnchor, ParentElement,
-    ParentOffsetBounds, Radius, Rect, ScrollStateHandle, ScrollbarWidth, Shrinkable,
-    SizeConstraintCondition, SizeConstraintSwitch, Stack, Text, Wrap,
-};
-use warpui::fonts::{Properties, Weight};
-use warpui::platform::Cursor;
-use warpui::ui_components::components::UiComponent;
-use warpui::ui_components::components::UiComponentStyles;
-use warpui::{
-    keymap::FixedBinding, Action, AppContext, Entity, FocusContext, ModelHandle, SingletonEntity,
-    TypedActionView, View, ViewContext, ViewHandle, WeakViewHandle,
-};
 
 lazy_static! {
     static ref HASHER: SipHasher = SipHasher::new_with_keys(0, 0);
@@ -490,7 +492,7 @@ impl AgentManagementView {
         let make_status_option =
             |label: String, action: AgentManagementViewAction, icon_data: Option<(Icon, Fill)>| {
                 let mut fields = MenuItemFields::new(label)
-                    .with_on_select_action(DropdownAction::SelectActionAndClose(action));
+                    .with_on_select_action(DropdownAction::select_action_and_close(action));
                 if let Some((icon, color)) = icon_data {
                     fields = fields.with_icon(icon).with_override_icon_color(color);
                 }
@@ -540,7 +542,7 @@ impl AgentManagementView {
     }
 
     /// Build the list of source filter items.
-    fn build_source_dropdown_items() -> Vec<MenuItem<DropdownAction<AgentManagementViewAction>>> {
+    fn build_source_dropdown_items() -> Vec<MenuItem<DropdownAction>> {
         // Build up the sources list
         let mut sources = vec![
             AgentSource::WebApp,
@@ -559,16 +561,16 @@ impl AgentManagementView {
 
         let mut items = vec![MenuItem::Item(
             MenuItemFields::new(t!("ai-ui-agent-filter-all")).with_on_select_action(
-                DropdownAction::SelectActionAndClose(AgentManagementViewAction::SetSourceFilter(
-                    SourceFilter::All,
-                )),
+                DropdownAction::select_action_and_close(
+                    AgentManagementViewAction::SetSourceFilter(SourceFilter::All),
+                ),
             ),
         )];
         for source in sources {
             let label = Self::agent_source_display_name(&source);
             items.push(MenuItem::Item(
                 MenuItemFields::new(label).with_on_select_action(
-                    DropdownAction::SelectActionAndClose(
+                    DropdownAction::select_action_and_close(
                         AgentManagementViewAction::SetSourceFilter(SourceFilter::Specific(source)),
                     ),
                 ),
@@ -612,28 +614,28 @@ impl AgentManagementView {
         let items = vec![
             MenuItem::Item(
                 MenuItemFields::new(t!("ai-ui-agent-filter-all")).with_on_select_action(
-                    DropdownAction::SelectActionAndClose(
+                    DropdownAction::select_action_and_close(
                         AgentManagementViewAction::SetCreatedOnFilter(CreatedOnFilter::All),
                     ),
                 ),
             ),
             MenuItem::Item(
                 MenuItemFields::new(t!("ai-ui-agent-filter-last-24-hours")).with_on_select_action(
-                    DropdownAction::SelectActionAndClose(
+                    DropdownAction::select_action_and_close(
                         AgentManagementViewAction::SetCreatedOnFilter(CreatedOnFilter::Last24Hours),
                     ),
                 ),
             ),
             MenuItem::Item(
                 MenuItemFields::new(t!("ai-ui-agent-filter-past-3-days")).with_on_select_action(
-                    DropdownAction::SelectActionAndClose(
+                    DropdownAction::select_action_and_close(
                         AgentManagementViewAction::SetCreatedOnFilter(CreatedOnFilter::Past3Days),
                     ),
                 ),
             ),
             MenuItem::Item(
                 MenuItemFields::new(t!("ai-ui-agent-filter-last-week")).with_on_select_action(
-                    DropdownAction::SelectActionAndClose(
+                    DropdownAction::select_action_and_close(
                         AgentManagementViewAction::SetCreatedOnFilter(CreatedOnFilter::LastWeek),
                     ),
                 ),
@@ -654,35 +656,35 @@ impl AgentManagementView {
         let items = vec![
             MenuItem::Item(
                 MenuItemFields::new(t!("ai-ui-agent-filter-all")).with_on_select_action(
-                    DropdownAction::SelectActionAndClose(
+                    DropdownAction::select_action_and_close(
                         AgentManagementViewAction::SetArtifactFilter(ArtifactFilter::All),
                     ),
                 ),
             ),
             MenuItem::Item(
                 MenuItemFields::new(t!("ai-ui-agent-filter-pull-request")).with_on_select_action(
-                    DropdownAction::SelectActionAndClose(
+                    DropdownAction::select_action_and_close(
                         AgentManagementViewAction::SetArtifactFilter(ArtifactFilter::PullRequest),
                     ),
                 ),
             ),
             MenuItem::Item(
                 MenuItemFields::new(t!("ai-ui-agent-filter-plan")).with_on_select_action(
-                    DropdownAction::SelectActionAndClose(
+                    DropdownAction::select_action_and_close(
                         AgentManagementViewAction::SetArtifactFilter(ArtifactFilter::Plan),
                     ),
                 ),
             ),
             MenuItem::Item(
                 MenuItemFields::new(t!("ai-ui-agent-filter-screenshot")).with_on_select_action(
-                    DropdownAction::SelectActionAndClose(
+                    DropdownAction::select_action_and_close(
                         AgentManagementViewAction::SetArtifactFilter(ArtifactFilter::Screenshot),
                     ),
                 ),
             ),
             MenuItem::Item(
                 MenuItemFields::new(t!("ai-ui-agent-filter-file")).with_on_select_action(
-                    DropdownAction::SelectActionAndClose(
+                    DropdownAction::select_action_and_close(
                         AgentManagementViewAction::SetArtifactFilter(ArtifactFilter::File),
                     ),
                 ),
@@ -706,14 +708,12 @@ impl AgentManagementView {
         dropdown
     }
 
-    fn build_harness_dropdown_items(
-        app: &AppContext,
-    ) -> Vec<MenuItem<DropdownAction<AgentManagementViewAction>>> {
+    fn build_harness_dropdown_items(app: &AppContext) -> Vec<MenuItem<DropdownAction>> {
         let mut items = vec![MenuItem::Item(
             MenuItemFields::new(t!("ai-ui-agent-filter-all")).with_on_select_action(
-                DropdownAction::SelectActionAndClose(AgentManagementViewAction::SetHarnessFilter(
-                    HarnessFilter::All,
-                )),
+                DropdownAction::select_action_and_close(
+                    AgentManagementViewAction::SetHarnessFilter(HarnessFilter::All),
+                ),
             ),
         )];
 
@@ -722,7 +722,7 @@ impl AgentManagementView {
             let harness = entry.harness;
             let mut fields = MenuItemFields::new(entry.display_name.clone())
                 .with_icon(harness_display::icon_for(harness))
-                .with_on_select_action(DropdownAction::SelectActionAndClose(
+                .with_on_select_action(DropdownAction::select_action_and_close(
                     AgentManagementViewAction::SetHarnessFilter(HarnessFilter::Specific(harness)),
                 ));
             if let Some(color) = harness_display::brand_color(harness) {
@@ -786,7 +786,7 @@ impl AgentManagementView {
     }
 
     // Initialize the dropdown menu for the filter dropdowns (status, source)
-    fn setup_filter_menu<A: Action + Clone>(
+    fn setup_filter_menu<A: DropdownItemAction>(
         dropdown: &mut Dropdown<A>,
         label_prefix: String,
         ctx: &mut ViewContext<Dropdown<A>>,
@@ -804,7 +804,7 @@ impl AgentManagementView {
     }
 
     // Initialize the dropdown menu for the searchable filter dropdowns (creator)
-    fn setup_searchable_filter_menu<A: Action + Clone>(
+    fn setup_searchable_filter_menu<A: DropdownItemAction>(
         dropdown: &mut FilterableDropdown<A>,
         label_prefix: String,
         ctx: &mut ViewContext<FilterableDropdown<A>>,
@@ -844,7 +844,7 @@ impl AgentManagementView {
         self.environment_dropdown.update(ctx, |dropdown, ctx| {
             let mut items = vec![MenuItem::Item(
                 MenuItemFields::new(t!("ai-ui-agent-filter-all")).with_on_select_action(
-                    DropdownAction::SelectActionAndClose(
+                    DropdownAction::select_action_and_close(
                         AgentManagementViewAction::SetEnvironmentFilter(EnvironmentFilter::All),
                     ),
                 ),
@@ -852,7 +852,7 @@ impl AgentManagementView {
 
             items.push(MenuItem::Item(
                 MenuItemFields::new(t!("ai-ui-agent-filter-none")).with_on_select_action(
-                    DropdownAction::SelectActionAndClose(
+                    DropdownAction::select_action_and_close(
                         AgentManagementViewAction::SetEnvironmentFilter(
                             EnvironmentFilter::NoEnvironment,
                         ),
@@ -866,7 +866,7 @@ impl AgentManagementView {
             for (environment_id, environment_name) in sorted_envs {
                 items.push(MenuItem::Item(
                     MenuItemFields::new(environment_name).with_on_select_action(
-                        DropdownAction::SelectActionAndClose(
+                        DropdownAction::select_action_and_close(
                             AgentManagementViewAction::SetEnvironmentFilter(
                                 EnvironmentFilter::Specific(environment_id),
                             ),
@@ -891,7 +891,7 @@ impl AgentManagementView {
         self.creator_dropdown.update(ctx, |dropdown, ctx| {
             let mut items = vec![MenuItem::Item(
                 MenuItemFields::new(t!("ai-ui-agent-filter-all")).with_on_select_action(
-                    DropdownAction::SelectActionAndClose(
+                    DropdownAction::select_action_and_close(
                         AgentManagementViewAction::SetCreatorFilter(CreatorFilter::All),
                     ),
                 ),
@@ -899,7 +899,7 @@ impl AgentManagementView {
             for (name, uid) in creators {
                 items.push(MenuItem::Item(
                     MenuItemFields::new(&name).with_on_select_action(
-                        DropdownAction::SelectActionAndClose(
+                        DropdownAction::select_action_and_close(
                             AgentManagementViewAction::SetCreatorFilter(CreatorFilter::Specific {
                                 name,
                                 uid,
@@ -1862,6 +1862,24 @@ impl AgentManagementView {
                     "ai-ui-agent-metadata-harness",
                     harness = availability.display_name_for(harness)
                 ));
+            }
+        }
+
+        if let Some(executor) = &entry.display.executor {
+            let same_as_creator =
+                executor.uid.is_some() && executor.uid == entry.display.creator.uid;
+            if !same_as_creator {
+                if let Some(name) = executor.name.as_deref().or(executor.uid.as_deref()) {
+                    let label = if executor
+                        .principal_type
+                        .is_some_and(|pt| pt.is_service_account())
+                    {
+                        "Agent"
+                    } else {
+                        "Executor"
+                    };
+                    metadata_parts.push(format!("{label}: {name}"));
+                }
             }
         }
 

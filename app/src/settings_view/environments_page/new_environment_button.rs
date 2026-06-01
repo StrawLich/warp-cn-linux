@@ -1,19 +1,18 @@
 use warp_core::ui::appearance::Appearance;
 use warp_i18n::t;
+use warpui::elements::{
+    Border, Container, CornerRadius, DispatchEventResult, EventHandler, Flex, MainAxisAlignment,
+    MouseStateHandle, ParentElement as _, Radius, Text,
+};
+use warpui::fonts::{Properties, Weight};
+use warpui::platform::Cursor;
 use warpui::{
-    elements::{
-        Border, Container, CornerRadius, DispatchEventResult, EventHandler, Flex,
-        MainAxisAlignment, MouseStateHandle, ParentElement as _, Radius, Text,
-    },
-    fonts::{Properties, Weight},
-    platform::Cursor,
     AppContext, BlurContext, Element, Entity, FocusContext, SingletonEntity, TypedActionView, View,
     ViewContext, ViewHandle, WeakViewHandle,
 };
 
-use crate::editor::EditorView;
-
 use super::EnvironmentsPageAction;
+use crate::editor::EditorView;
 
 pub struct NewEnvironmentButtonView {
     trigger_mouse_state: MouseStateHandle,
