@@ -75,7 +75,7 @@ resources\                ← 打包资源（由安装流程生成）
 
 ### 从源码构建
 
-在 Windows 上构建需要 MSVC 工具链（Visual Studio 2022 Build Tools，含 Windows SDK），`app/build.rs` 经注册表定位 `RC.EXE` 编译资源：
+在 Windows 上构建需要 MSVC 工具链（Visual Studio 2022 Build Tools，含 Windows SDK）。`app/build.rs` 经注册表定位 `cl.exe` 以装配 MSVC 环境（让资源编译器能找到头文件），再由 embed-resource 调用 `rc.exe` 编译资源：
 
 ```sh
 cargo build --release --bin warp-oss --features gui
