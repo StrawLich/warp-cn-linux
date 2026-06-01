@@ -75,6 +75,20 @@ fi
 # being edited in the same checkout).
 CONFLICTS="$(git diff --name-only --diff-filter=U | sort -u)"
 COUNT="$(printf '%s\n' "$CONFLICTS" | grep -c . || true)"
+
+# rerere.autoupdate + the i18n-aware merge driver can auto-resolve every hunk: the
+# index then has zero unmerged paths (COUNT=0) even though `git merge` exited
+# non-zero (a conflicted merge always stops before committing for human review).
+# That is effectively a clean sync — finalize the merge commit and report clean so
+# the i18n-lint + open-pr path runs (a reviewable PR), instead of filing a bogus
+# "0 file(s)" conflict issue or silently orphaning the fully-resolved branch.
+if [ "$COUNT" -eq 0 ]; then
+  echo "::notice::merge fully auto-resolved (rerere); finalizing as clean sync"
+  git commit --no-edit --no-verify
+  emit "status=clean"
+  exit 0
+fi
+
 echo "::warning::merge conflicts in $COUNT file(s)"
 printf '%s\n' "$CONFLICTS"
 

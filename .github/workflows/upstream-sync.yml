@@ -105,7 +105,10 @@ jobs:
 
   open-issue:
     needs: sync
-    if: needs.sync.outputs.status == 'conflict'
+    # Defense-in-depth: the sync script already routes a fully rerere-resolved
+    # merge (conflict_count == 0) to the clean/open-pr path, but guard here too so
+    # no code path can ever file a bogus "0 file(s)" conflict issue.
+    if: needs.sync.outputs.status == 'conflict' && needs.sync.outputs.conflict_count != '0'
     runs-on: ubuntu-latest
     steps:
       - name: Open conflict issue
