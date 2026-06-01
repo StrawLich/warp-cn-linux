@@ -1036,7 +1036,7 @@ impl ConversationDetailsPanel {
         let ui_font_size = appearance.ui_font_size();
 
         let label_text = Text::new(
-            "Agent".to_string(),
+            t!("ai-ui-conversation-details-agent"),
             appearance.ui_font_family(),
             ui_font_size,
         )

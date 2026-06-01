@@ -938,7 +938,7 @@ impl PlatformPageWidget {
     fn render_no_search_results(&self, appearance: &Appearance) -> Box<dyn Element> {
         Container::new(
             Text::new(
-                "No API keys match your search",
+                warp_i18n::t!("settings-platform-no-api-keys-search-match"),
                 appearance.ui_font_family(),
                 CONTENT_FONT_SIZE,
             )

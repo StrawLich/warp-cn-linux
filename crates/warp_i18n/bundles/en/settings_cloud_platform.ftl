@@ -134,3 +134,5 @@ settings-environments-agent-assisted-modal-unavailable = Local repo selection is
 settings-environments-agent-assisted-modal-description-indexed = Select locally indexed repos to provide context for the environment creation agent.
 settings-environments-agent-assisted-modal-description-default = Select repos to provide context for the environment creation agent.
 settings-environments-agent-assisted-modal-title = Select repos for your environment
+settings-platform-custom-endpoint-description = Provide your endpoint details below. You can add as many models from the endpoint as you'd like and can also provide aliases for the model picker in your input.
+settings-platform-no-api-keys-search-match = No API keys match your search

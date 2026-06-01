@@ -642,7 +642,7 @@ fn read_openai_api_key_secret_value(
                 // Non-interactive: leave the base URL unset rather than prompting or failing.
                 None
             } else {
-                match inquire::Text::new("OpenAI base URL (optional, press Enter to skip):")
+                match inquire::Text::new(&warp_i18n::t!("ai-ui-openai-base-url-prompt"))
                     .with_help_message("e.g. https://us.api.openai.com/v1 for a regional endpoint")
                     .prompt()
                 {

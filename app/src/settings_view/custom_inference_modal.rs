@@ -618,7 +618,7 @@ impl View for CustomEndpointModal {
         column.add_child(
             Container::new(
                 Text::new(
-                    "Provide your endpoint details below. You can add as many models from the endpoint as you'd like and can also provide aliases for the model picker in your input.",
+                    warp_i18n::t!("settings-platform-custom-endpoint-description"),
                     appearance.ui_font_family(),
                     LABEL_FONT_SIZE,
                 )

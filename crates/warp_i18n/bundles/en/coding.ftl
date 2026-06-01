@@ -55,3 +55,4 @@ coding-loading = Loading…
 # Mermaid diagram render failures
 coding-mermaid-error-rendering = Error rendering Mermaid diagram. Please check syntax.
 coding-mermaid-failed-rendering = Failed to render Mermaid diagram
+coding-remote-host-disconnected = Remote host disconnected. You will not be able to see updates and save changes.

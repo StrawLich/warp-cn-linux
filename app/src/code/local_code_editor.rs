@@ -2481,7 +2481,7 @@ pub fn render_remote_disconnected_banner(appearance: &Appearance) -> Box<dyn Ele
             Shrinkable::new(
                 1.,
                 Text::new(
-                    "Remote host disconnected. You will not be able to see updates and save changes.",
+                    t!("coding-remote-host-disconnected"),
                     appearance.ui_font_family(),
                     appearance.ui_font_size(),
                 )

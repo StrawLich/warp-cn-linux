@@ -1841,7 +1841,7 @@ impl BillingAndUsagePageV2View {
                 )
                 .with_child(
                     Container::new(
-                        Text::new("No usage history", appearance.ui_font_family(), 14.)
+                        Text::new(warp_i18n::t!("settings-billing-no-usage-history"), appearance.ui_font_family(), 14.)
                             .with_color(blended_colors::text_sub(
                                 appearance.theme(),
                                 appearance.theme().surface_1(),
@@ -1853,7 +1853,7 @@ impl BillingAndUsagePageV2View {
                 )
                 .with_child(
                     Text::new(
-                        "Kick off an agent task to view usage history here.",
+                        warp_i18n::t!("settings-billing-usage-history-empty-hint"),
                         appearance.ui_font_family(),
                         14.,
                     )
