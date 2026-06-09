@@ -2,7 +2,6 @@
 # Keys MUST start with `settings-billing-`.
 
 settings-billing-title = 计费与用量
-settings-billing-no-usage-history = 无使用历史
 settings-billing-kick-off-agent = 启动智能体任务即可在此查看使用历史。
 settings-billing-tab-overview = 概览
 settings-billing-tab-usage-history = 使用历史

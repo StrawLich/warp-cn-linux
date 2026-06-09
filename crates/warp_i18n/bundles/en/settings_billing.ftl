@@ -2,7 +2,6 @@
 # Keys MUST start with `settings-billing-`.
 
 settings-billing-title = Billing and usage
-settings-billing-no-usage-history = No usage history
 settings-billing-kick-off-agent = Kick off an agent task to view usage history here.
 settings-billing-tab-overview = Overview
 settings-billing-tab-usage-history = Usage History
